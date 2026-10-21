@@ -316,7 +316,7 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
 
   <section class="ecran" data-ecran="mur" aria-labelledby="tMur" tabindex="-1">
     <h2 class="titre-grand" id="tMur">Le mur de l'équipe</h2>
-    <p class="sous" id="sousMur">Les mots de l'équipe arrivent ici</p>
+    <p class="sous" id="sousMur"></p>
     <div class="mur" data-noswipe>
       <button class="rond" type="button" id="murPrec" aria-label="Mot précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="carte-mur" id="carteMur" aria-live="polite"></div>
@@ -330,7 +330,7 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
     <h2 class="signature" id="tFin"></h2>
     <p class="noms" id="noms"></p>
     <div class="actions">
-      <a class="bouton" id="finDate" target="_blank" rel="noopener">Choisir mes dates</a>
+      <a class="bouton" id="finDate">Choisir mes dates</a>
       <button class="lien" type="button" id="recommencer">Revoir depuis le début</button>
     </div>
   </section>
@@ -446,10 +446,12 @@ const lien=CADEAU.lienDate && !CADEAU.lienDate.startsWith("__") ? CADEAU.lienDat
 if(lien){
   $("#dateCarte").innerHTML=`<div class="calendrier" aria-hidden="true"><b>Atelier</b><span>?</span></div>
      <p>Coche toutes les dates qui te vont. On garde celle où tu es dispo avec le plus de monde.</p>
-     <a class="bouton" id="lienDate" target="_blank" rel="noopener">Choisir mes dates</a>
+     <a class="bouton" id="lienDate">Choisir mes dates</a>
      <span class="reponses" id="reponses" aria-live="polite"></span>
      <div class="qr-bloc"><div id="qr" aria-hidden="true"></div><p class="petit">Ou scanne le code avec ton téléphone</p></div>`;
   $("#lienDate").href=lien; $("#finDate").href=lien;
+  // En partant vers les dates, l'adresse garde #date pour que la flèche retour ramène sur cet écran.
+  for(const a of [$("#lienDate"),$("#finDate")]) a.addEventListener("click",()=>history.replaceState(null,"","#date"));
   if(window.QRCode) new QRCode($("#qr"),{text:lien,width:300,height:300,colorDark:"#140A3D",colorLight:"#ffffff"});
 } else { $("#dateCarte").innerHTML=`<p>Le sondage des dates arrive très vite.</p>`; $("#finDate").hidden=true; }
 
@@ -459,7 +461,9 @@ const ecrans=[...document.querySelectorAll(".ecran")];
 const idx=n=>ecrans.findIndex(e=>e.dataset.ecran===n);
 const verrou=idx("four");          // on ne passe le four qu'en défournant
 // Une fois le four passé, Lucie n'a pas à le refaire quand elle revient sur le site.
-let ici=0, fourOk=memoire.lire("lucie-four")==="1";
+// Avec #date dans l'adresse (retour depuis la page des dates), tout est déjà débloqué.
+const retourDate=location.hash==="#date" && idx("date")>=0;
+let ici=0, fourOk=memoire.lire("lucie-four")==="1" || retourDate;
 const histoire=$("#histoire"); ecrans.forEach(()=>histoire.appendChild(document.createElement("span")));
 const clairs=["bon","date","mur"];
 function peutAller(i){ return i>=0 && i<ecrans.length && (i<=verrou || fourOk); }
@@ -473,6 +477,7 @@ function aller(i, focus=true){
   $("#prec").disabled=i===0; $("#suiv").disabled=!peutAller(i+1);
   $("#suiv").classList.remove("appel");
   if(focus) ecrans[i].focus({preventScroll:true});
+  if(nom!=="date" && location.hash==="#date") history.replaceState(null,"",location.pathname+location.search);
   arrive(nom);
 }
 // Le bouton suivant clignote doucement quand l'écran a livré sa surprise.
@@ -615,7 +620,7 @@ function montrerMot(i){
   $("#compteur").textContent=L.length>1?`${mot+1} sur ${L.length}`:"";
   $("#murPrec").hidden=$("#murSuiv").hidden=L.length<2;
   $("#voirTout").hidden=L.length<3;
-  $("#sousMur").textContent= mots.length ? (mots.length===1?"Un mot de l'équipe, rien que pour toi":`${mots.length} mots de l'équipe, rien que pour toi`) : "Les mots de l'équipe arrivent ici";
+  $("#sousMur").textContent= mots.length ? (mots.length===1?"Un mot de l'équipe, rien que pour toi":`${mots.length} mots de l'équipe, rien que pour toi`) : "";
 }
 // Les mots de la carte arrivent en direct à partir de l'écran des dates, et l'écoute reste ouverte jusqu'à la fin.
 // Si la base ne répond pas, le mur garde ce qu'il affiche déjà.
@@ -664,7 +669,9 @@ function ecrireNoms(){
   if(CADEAU.fin.texte) z.append(document.createElement("br"), CADEAU.fin.texte);
 }
 $("#recommencer").addEventListener("click",()=>aller(0));
-aller(0,false);
+aller(retourDate?idx("date"):0,false);
+// Retour avec la flèche du téléphone quand la page sort du cache : on retombe aussi sur les dates.
+addEventListener("pageshow",e=>{ if(e.persisted && location.hash==="#date" && idx("date")>=0){ fourOk=true; aller(idx("date"),false); } });
 </script>
 </body>
 </html>
