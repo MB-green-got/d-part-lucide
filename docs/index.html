@@ -40,7 +40,6 @@ body{background:var(--email);color:var(--argile);font-family:var(--body);font-si
 /* Une couleur d'émail par écran. */
 body[data-ecran="four"]{background-color:var(--encre)}
 body[data-ecran="bon"]{background-color:var(--menthe);color:var(--encre)}
-body[data-ecran="date"]{background-color:var(--rose);color:var(--encre)}
 body[data-ecran="mur"]{background-color:var(--argile);color:var(--encre)}
 body[data-ecran="fin"]{background-color:var(--encre)}
 img{max-width:100%;display:block}
@@ -52,7 +51,7 @@ body::after{content:"";position:fixed;inset:0;z-index:4;pointer-events:none;opac
 h1,h2,h3{font-family:var(--display);font-weight:400;line-height:.95;margin:0;text-wrap:balance}
 .etiquette{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(.66rem,min(3vw,1.5dvh),.8rem);margin:0}
 :focus-visible{outline:4px solid var(--citron);outline-offset:4px;border-radius:8px}
-body[data-ecran="bon"] :focus-visible,body[data-ecran="date"] :focus-visible,body[data-ecran="mur"] :focus-visible{outline-color:var(--encre)}
+body[data-ecran="bon"] :focus-visible,body[data-ecran="mur"] :focus-visible{outline-color:var(--encre)}
 
 .scene{position:fixed;inset:0;z-index:1}
 .ecran{position:absolute;inset:0;isolation:isolate;outline:none;
@@ -168,19 +167,8 @@ body[data-ecran="bon"] :focus-visible,body[data-ecran="date"] :focus-visible,bod
 #grattoir.parti{opacity:0;pointer-events:none}
 
 /* Date */
-.date-carte{width:min(100%,460px);background:var(--argile);color:var(--encre);border-radius:26px;padding:clamp(18px,3dvh,30px);display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.8dvh,16px);box-shadow:0 10px 0 rgba(20,10,61,.25);transform:rotate(-1deg)}
-.date-carte p{margin:0;font-weight:600}
-.calendrier{width:clamp(64px,10dvh,88px);aspect-ratio:1;border-radius:16px;background:#fff;border:3px solid var(--encre);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 4px 0 var(--encre);transform:rotate(-6deg)}
-.calendrier b{background:var(--mandarine);font:800 .62rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;padding:5px 0}
-.calendrier span{flex:1;display:grid;place-items:center;font:400 clamp(1.4rem,4dvh,2.1rem)/1 var(--display)}
-.qr-bloc{display:flex;flex-direction:column;align-items:center;gap:8px}
-#qr{background:#fff;padding:8px;border-radius:12px;line-height:0;border:3px solid var(--encre)}
-#qr img,#qr canvas{width:clamp(90px,14dvh,140px);height:clamp(90px,14dvh,140px)}
 .petit{font-size:.85em;opacity:.8}
-.reponses{font-weight:800;font-size:.9em}
-.reponses:empty{display:none}
 /* Sur téléphone on y est déjà, le code ne sert à rien. */
-@media (hover:none) and (pointer:coarse){ .qr-bloc{display:none} }
 
 /* Mur */
 .mur{width:100%;display:flex;align-items:center;justify-content:center;gap:clamp(8px,3vw,20px)}
@@ -229,6 +217,13 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
 .une .polaroid{width:min(100%,320px);transform:rotate(-3deg)}
 .une .polaroid img{aspect-ratio:1;flex:none}
 .une p{margin:0;font-family:var(--main);font-size:clamp(1.6rem,5vw,2.4rem);line-height:1.15;max-width:16ch;text-wrap:balance}
+/* Une photo du mur, en grand quand on la touche. */
+.polaroid img[role=button]{cursor:zoom-in}
+dialog.loupe{width:100%;height:100%;max-width:none;max-height:none;margin:0;border:0;padding:calc(72px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px));background:transparent;color:var(--argile)}
+dialog.loupe[open]{display:grid;place-items:center;animation:monte-feuille .3s var(--ressort)}
+dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
+.loupe img{max-width:100%;max-height:100%;object-fit:contain;border:8px solid #fff;box-shadow:0 12px 0 rgba(0,0,0,.25)}
+.loupe .rond{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px))}
 
 /* Fin */
 .signature{font-family:var(--display);font-size:var(--t-geant);color:var(--citron);line-height:.95;margin:0}
@@ -251,7 +246,7 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
 @keyframes monte-feuille{from{transform:translateY(40px);opacity:0}}
 .secoue{animation:secoue .45s}
 
-@media (max-height:620px){ .pastille{display:none} .assiette{width:min(48vw,26dvh)} .calendrier,.coeur{display:none} }
+@media (max-height:620px){ .pastille{display:none} .assiette{width:min(48vw,26dvh)} .coeur{display:none} }
 @media (min-width:900px){ .grand .defile{padding-inline:40px} }
 @media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation:none!important;transition-duration:.01ms!important} }
 </style>
@@ -320,12 +315,6 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
     <button class="lien" type="button" id="revelerBon">Gratte avec ton doigt, ou touche ici pour tout révéler</button>
   </section>
 
-  <section class="ecran" data-ecran="date" aria-labelledby="tDate" tabindex="-1">
-    <p class="etiquette">Dernière étape</p>
-    <h2 class="titre-grand" id="tDate">Choisis ta date</h2>
-    <div class="date-carte" id="dateCarte"></div>
-  </section>
-
   <section class="ecran" data-ecran="mur" aria-labelledby="tMur" tabindex="-1">
     <h2 class="titre-grand" id="tMur">Le mur de l'équipe</h2>
     <p class="sous" id="sousMur"></p>
@@ -368,8 +357,12 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
   <div class="defile"><div class="une" id="une"></div><div class="grille" id="grille"></div></div>
 </dialog>
 
+<dialog class="loupe" id="loupe" aria-label="Photo en grand">
+  <button class="rond" type="button" id="fermerLoupe" aria-label="Fermer la photo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <img id="loupeImg" alt="">
+</dialog>
+
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 /* =========================================================
    TOUT CE QUI SE MODIFIE EST ICI
@@ -456,16 +449,10 @@ $("#montant").textContent=CADEAU.bon.montant||"Carte blanche"; $("#bonTexte").te
 $("#tFin").textContent=CADEAU.fin.titre;
 const lien=CADEAU.lienDate && !CADEAU.lienDate.startsWith("__") ? CADEAU.lienDate : "";
 if(lien){
-  $("#dateCarte").innerHTML=`<div class="calendrier" aria-hidden="true"><b>Atelier</b><span>?</span></div>
-     <p>Coche toutes les dates qui te vont. On garde celle où tu es dispo avec le plus de monde.</p>
-     <a class="bouton" id="lienDate">Choisir mes dates</a>
-     <span class="reponses" id="reponses" aria-live="polite"></span>
-     <div class="qr-bloc"><div id="qr" aria-hidden="true"></div><p class="petit">Ou scanne le code avec ton téléphone</p></div>`;
-  $("#lienDate").href=lien; $("#finDate").href=lien;
-  // En partant vers les dates, l'adresse garde #date pour que la flèche retour ramène sur cet écran.
-  for(const a of [$("#lienDate"),$("#finDate")]) a.addEventListener("click",()=>history.replaceState(null,"","#date"));
-  if(window.QRCode) new QRCode($("#qr"),{text:lien,width:300,height:300,colorDark:"#140A3D",colorLight:"#ffffff"});
-} else { $("#dateCarte").innerHTML=`<p>Le sondage des dates arrive très vite.</p>`; $("#finDate").hidden=true; }
+  $("#finDate").href=lien;
+  // En partant vers les dates, l'adresse garde #date pour que la flèche retour ramène sur l'écran de fin.
+  $("#finDate").addEventListener("click",()=>history.replaceState(null,"","#date"));
+} else $("#finDate").hidden=true;
 
 /* Navigation écran par écran */
 if(!CADEAU.mur.length) document.querySelector('[data-ecran="mur"]').remove();
@@ -474,10 +461,10 @@ const idx=n=>ecrans.findIndex(e=>e.dataset.ecran===n);
 const verrou=idx("four");          // on ne passe le four qu'en défournant
 // Une fois le four passé, Lucie n'a pas à le refaire quand elle revient sur le site.
 // Avec #date dans l'adresse (retour depuis la page des dates), tout est déjà débloqué.
-const retourDate=location.hash==="#date" && idx("date")>=0;
+const retourDate=location.hash==="#date";
 let ici=0, fourOk=memoire.lire("lucie-four")==="1" || retourDate;
 const histoire=$("#histoire"); ecrans.forEach(()=>histoire.appendChild(document.createElement("span")));
-const clairs=["bon","date","mur"];
+const clairs=["bon","mur"];
 function peutAller(i){ return i>=0 && i<ecrans.length && (i<=verrou || fourOk); }
 function aller(i, focus=true){
   if(!peutAller(i)) return;
@@ -489,7 +476,7 @@ function aller(i, focus=true){
   $("#prec").disabled=i===0; $("#suiv").disabled=!peutAller(i+1);
   $("#suiv").classList.remove("appel");
   if(focus) ecrans[i].focus({preventScroll:true});
-  if(nom!=="date" && location.hash==="#date") history.replaceState(null,"",location.pathname+location.search);
+  if(nom!=="fin" && location.hash==="#date") history.replaceState(null,"",location.pathname+location.search);
   arrive(nom);
 }
 // Le bouton suivant clignote doucement quand l'écran a livré sa surprise.
@@ -497,7 +484,7 @@ const appel=()=>{ if(!$("#suiv").disabled) $("#suiv").classList.add("appel"); };
 $("#suiv").addEventListener("click",()=>{ aller(ici+1); bip(500); });
 $("#prec").addEventListener("click",()=>{ aller(ici-1); bip(420); });
 $("#ouvrir").addEventListener("click",()=>{ aller(1); bip(500); });
-addEventListener("keydown",e=>{ if($("#toutMur").open) return;
+addEventListener("keydown",e=>{ if($("#toutMur").open || $("#loupe").open) return;
   if(e.key==="ArrowRight") $("#suiv").click(); if(e.key==="ArrowLeft") $("#prec").click(); });
 // Glisser pour changer d'écran, sauf là où le doigt sert déjà (grattage, mur).
 let x0=null,y0=null;
@@ -507,11 +494,10 @@ $("#scene").addEventListener("touchend",e=>{ if(x0===null) return; const dx=e.ch
 
 let feteTicket=false, feteFin=false;
 function arrive(n){
-  if(["date","mur","fin"].includes(n)) ecouterMur();
+  if(["mur","fin"].includes(n)) ecouterMur();
   if(n==="ticket" && !feteTicket){ feteTicket=true; setTimeout(()=>fete(true),300); melodie([523,659,784]); }
   if(n==="ticket" && $("#ticket").classList.contains("ouvert")) appel();
   if(n==="bon"){ peindreGrattoir(); if(bonOk) appel(); }
-  if(n==="date"){ compterReponses(); setTimeout(()=>{ if(ecrans[ici].dataset.ecran==="date") appel(); },2500); }
   if(n==="mur") montrerMot(0);
   if(n==="fin"){ ecrireNoms(); if(!feteFin){ feteFin=true; setTimeout(()=>fete(true),300); melodie([523,659,784,1046]); } }
 }
@@ -594,16 +580,9 @@ $("#revelerBon").addEventListener("click",revelerBon);
 if(document.fonts) document.fonts.ready.then(peindreGrattoir);
 addEventListener("resize",peindreGrattoir);
 
-/* Données en direct : les mots du mur et les réponses au sondage */
+/* Données en direct : les mots du mur */
 let base=null;
 const chargerBase=()=> base ||= import("./js/base.js").catch(e=>{ base=null; throw e; });
-function compterReponses(){
-  const z=$("#reponses"); if(!z) return;
-  chargerBase().then(({db,collection,getDocs})=>getDocs(collection(db,"dispos"))).then(s=>{
-    const n=s.docs.filter(d=>(d.data().dates||[]).length).length;
-    z.textContent = n ? (n===1?"Une personne a déjà répondu":`${n} personnes ont déjà répondu`) : "";
-  }).catch(()=>{});
-}
 
 /* Mur, un mot à la fois */
 let mot=0, mots=[], ecoute=null, signature=""; const fondsPost={citron:"#FFD23F",menthe:"#4FE3B0",rose:"#FF5FA2",mandarine:"#FF7A2F",argile:"#FFFFFF"};
@@ -614,7 +593,7 @@ function liste(){
   return L;
 }
 function polaroid(src,alt,legende){ const f=document.createElement("figure"); f.className="polaroid";
-  const im=document.createElement("img"); im.src=src; im.alt=alt; im.decoding="async"; const c=document.createElement("figcaption"); c.textContent=legende;
+  const im=document.createElement("img"); im.src=src; im.alt=alt; im.decoding="async"; im.tabIndex=0; im.setAttribute("role","button"); im.title="Agrandir la photo"; const c=document.createElement("figcaption"); c.textContent=legende;
   f.append(im,c); return f; }
 function element(m,k){
   const r=((k*37)%7)-3;
@@ -675,6 +654,15 @@ function remplirGrille(){
 $("#voirTout").addEventListener("click",()=>{ remplirGrille(); $("#toutMur").showModal(); bip(660); });
 $("#fermerTout").addEventListener("click",()=>$("#toutMur").close());
 
+// Toucher une photo du mur l'ouvre en grand. On ferme avec la croix, Échap ou en touchant à côté.
+function agrandir(im){ $("#loupeImg").src=im.src; $("#loupeImg").alt=im.alt; $("#loupe").showModal(); bip(660); }
+document.addEventListener("click",e=>{ const im=e.target.closest(".polaroid img[role=button]"); if(im) agrandir(im); });
+document.addEventListener("keydown",e=>{ const im=e.target.closest&&e.target.closest(".polaroid img[role=button]");
+  if(im && (e.key==="Enter"||e.key===" ")){ e.preventDefault(); agrandir(im); } });
+$("#fermerLoupe").addEventListener("click",()=>$("#loupe").close());
+$("#loupe").addEventListener("click",e=>{ if(e.target.id==="loupe") $("#loupe").close(); });
+$("#loupe").addEventListener("close",()=>$("#loupeImg").removeAttribute("src"));
+
 /* Fin, signée par celles et ceux qui ont écrit */
 function ecrireNoms(){
   const vus=new Set(), tous=[];
@@ -689,9 +677,9 @@ function ecrireNoms(){
   if(CADEAU.fin.texte) z.append(document.createElement("br"), CADEAU.fin.texte);
 }
 $("#recommencer").addEventListener("click",()=>aller(0));
-aller(retourDate?idx("date"):0,false);
-// Retour avec la flèche du téléphone quand la page sort du cache : on retombe aussi sur les dates.
-addEventListener("pageshow",e=>{ if(e.persisted && location.hash==="#date" && idx("date")>=0){ fourOk=true; aller(idx("date"),false); } });
+aller(retourDate?idx("fin"):0,false);
+// Retour avec la flèche du téléphone quand la page sort du cache : on retombe aussi sur la fin.
+addEventListener("pageshow",e=>{ if(e.persisted && location.hash==="#date"){ fourOk=true; aller(idx("fin"),false); } });
 </script>
 </body>
 </html>
