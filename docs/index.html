@@ -530,7 +530,8 @@ function cuire(i,b){
   z.innerHTML=`<span class="etiquette">Indice ${i+1} sur 3</span><span class="txt"></span><span class="souv"></span>`;
   z.querySelector(".txt").textContent=d.indice; z.querySelector(".souv").textContent=d.souvenir;
 }
-if(fourOk){ document.querySelectorAll(".piece").forEach((b,i)=>{ b.classList.add("cuite"); b.setAttribute("aria-label",`Relire l'indice de ${noms[i]}`); }); cuites=3; chauffer(); }
+// Le four repart à froid à chaque visite pour rejouer la cuisson, mais Lucie peut défourner tout de suite si elle l'a déjà fait.
+if(fourOk){ $("#defourner").disabled=false; $("#defourner").classList.add("pret"); }
 $("#defourner").addEventListener("click",()=>{ fourOk=true; memoire.ecrire("lucie-four","1"); aller(verrou+1); });
 
 /* Ticket */
