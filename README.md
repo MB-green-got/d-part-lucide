@@ -103,6 +103,16 @@ Chaque personne de l'équipe peut joindre une photo à son mot, directement sur 
 
 La photo de Lucie reste en premier. Les post it et les photos s'affichent ensuite en alternance.
 
+### 7. Personnaliser les textes (facultatif)
+
+Tout se règle en haut du script de `docs/index.html`, dans `const CADEAU = {` :
+
+- `bon.montant` : le montant révélé quand Lucie gratte le bon cadeau, par exemple `"120 €"`. Vide, le bon affiche « Carte blanche ».
+- `fin.titre` et `fin.texte` : la phrase du dernier écran et la ligne affichée sous les prénoms.
+- `signatures` : des prénoms à ajouter à la fin, en plus de ceux de toutes les personnes qui ont écrit sur le mur.
+
+Le site retient dans le navigateur de Lucie qu'elle a déjà passé le four : quand elle revient, elle peut aller directement au mur.
+
 ## Les trois adresses à envoyer
 
 - **À Lucie, le site cadeau** : `https://mb-green-got.github.io/d-part-lucide/`

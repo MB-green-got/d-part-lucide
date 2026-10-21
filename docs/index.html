@@ -369,7 +369,7 @@ const CADEAU = {
     lieu: "Un café céramique à Paris",
     date: "C'est toi qui choisis"
   },
-  lienDate: new URL("date/", location.href).href,   // construite à partir de l'adresse du site
+  lienDate: new URL("date/?prenom=Lucie", location.href).href,   // construite à partir de l'adresse du site, avec le prénom de Lucie déjà rempli
   bon: {
     montant: "",                    // par exemple "120 €", vide affiche « Carte blanche »
     texte: "Pour te faire plaisir, c'est toi qui choisis."
