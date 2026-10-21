@@ -186,7 +186,7 @@ for (const b of document.querySelectorAll("[data-sortir]")) b.addEventListener("
 
 onAuthStateChanged(auth, async u => {
   for (const a of arrets) a(); arrets = [];
-  $("#statut").textContent = "";
+  $("#statut").textContent = ""; $("#nbMots").textContent = "";
   $("#entree").hidden = !!u; $("#refus").hidden = true; $("#postits").hidden = true; $("#sortir").hidden = true; $("#creneaux").hidden = true;
   if (!u) return;
   let admin = false;
