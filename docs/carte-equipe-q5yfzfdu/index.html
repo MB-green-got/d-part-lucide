@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Carte de départ de Lucie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Gochi+Hand&display=swap">
+<style>
+/* Concept → la grande carte qu'on fait passer au bureau, version atelier céramique.
+   Un formulaire en carton au centre, puis un mur de post it qui se remplit en direct. */
+:root{
+  --email:#1F3BFF; --email-deep:#1426B8;
+  --rose:#FF5FA2; --citron:#FFD23F; --menthe:#4FE3B0; --mandarine:#FF7A2F;
+  --argile:#FFF4EC; --encre:#140A3D; --voile:rgba(255,244,236,.18);
+  --display:"Bagel Fat One","Arial Black",system-ui,sans-serif;
+  --body:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --main:"Gochi Hand","Comic Sans MS",cursive;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{overflow-x:clip}
+body{background:var(--email);color:var(--argile);font-family:var(--body);font-size:1rem;line-height:1.55;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:clamp(36px,6vw,72px)}
+.cadre{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:clamp(32px,5vw,56px)}
+.etiquette{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;margin:0}
+h1,h2{font-family:var(--display);font-weight:400;line-height:.95;margin:0;text-wrap:balance}
+header{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+h1{font-size:clamp(2.8rem,1.6rem + 6vw,6.5rem)}
+h1 span{color:var(--citron)}
+header p.chapeau{font-size:clamp(1.1rem,1rem + .6vw,1.4rem);font-weight:600;max-width:34ch;margin:0}
+:focus-visible{outline:4px solid var(--citron);outline-offset:3px;border-radius:6px}
+
+form{width:min(100%,560px);background:var(--argile);color:var(--encre);border-radius:28px;padding:clamp(22px,4vw,34px);display:flex;flex-direction:column;gap:16px;box-shadow:0 10px 0 var(--email-deep);transform:rotate(-1deg)}
+form h2{font-size:clamp(1.8rem,1.4rem + 1.6vw,2.4rem);text-align:center}
+label{font-weight:800;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}
+.champ{display:flex;flex-direction:column;gap:6px}
+input[type=text],textarea{font:600 1.05rem var(--body);color:var(--encre);background:#fff;border:3px solid var(--encre);border-radius:14px;padding:.7em .85em;width:100%}
+/* Le message s'écrit directement sur le post it, dans la couleur choisie. */
+.postit-saisie{position:relative;margin-top:10px;transform:rotate(-1.5deg);transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+.postit-saisie::before{content:"";position:absolute;z-index:1;top:-12px;left:50%;width:84px;height:24px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.75);pointer-events:none}
+.postit-saisie:focus-within{transform:rotate(0) scale(1.01)}
+textarea{font-family:var(--main);font-size:1.45rem;line-height:1.2;min-height:170px;resize:vertical;background:var(--fond-postit,var(--citron));border:0;border-radius:2px;padding:1.1em 1em .9em;box-shadow:0 8px 0 rgba(20,10,61,.22);transition:background-color .3s}
+textarea::placeholder{color:rgba(20,10,61,.55)}
+textarea:focus-visible{outline:4px solid var(--email);outline-offset:4px}
+.compte{font-size:.82rem;text-align:right;font-variant-numeric:tabular-nums;margin-top:6px}
+.compte.presque{color:#C2410C;font-weight:800}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.couleurs{display:flex;gap:12px;flex-wrap:wrap;border:0;padding:0;margin:0}
+.couleurs legend{font-weight:800;font-size:.85rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding:0}
+.couleurs input{position:absolute;opacity:0;width:1px;height:1px}
+.couleurs label{width:44px;height:44px;border-radius:12px;border:3px solid var(--encre);cursor:pointer;display:block;transition:transform .15s}
+.couleurs input:checked+label{transform:rotate(-8deg) scale(1.12);box-shadow:0 4px 0 var(--encre)}
+.couleurs input:focus-visible+label{outline:4px solid var(--email);outline-offset:3px}
+.bouton{font:800 1.1rem/1 var(--body);border:0;cursor:pointer;color:var(--encre);background:var(--citron);padding:1em 1.6em;border-radius:999px;box-shadow:0 6px 0 var(--encre);transition:transform .15s,box-shadow .15s;align-self:center}
+.bouton:hover{transform:translateY(-3px) rotate(-1.5deg);box-shadow:0 9px 0 var(--encre)}
+.bouton:active{transform:translateY(4px);box-shadow:0 2px 0 var(--encre)}
+.bouton[disabled]{opacity:.5;cursor:wait;transform:none}
+.statut{min-height:1.4em;text-align:center;font-weight:700;margin:0}
+.lien{background:none;border:0;color:var(--encre);font:600 .9rem var(--body);text-decoration:underline;text-underline-offset:4px;cursor:pointer;align-self:center}
+.photo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.photo input{position:absolute;opacity:0;width:1px;height:1px}
+.photo .choisir{font:800 .95rem var(--body);text-transform:none;letter-spacing:0;background:#fff;border:3px dashed var(--encre);border-radius:14px;padding:.7em 1em;cursor:pointer}
+.photo input:focus-visible+.choisir{outline:4px solid var(--email);outline-offset:3px}
+.photo img{width:72px;height:72px;object-fit:cover;border-radius:10px;border:3px solid var(--encre);transform:rotate(-3deg)}
+.photo .lien{align-self:center}
+.aide{font-size:.82rem;margin:0}
+
+.mur{width:100%;display:flex;flex-direction:column;align-items:center;gap:24px}
+.mur h2{font-size:clamp(2rem,1.4rem + 2.6vw,3.4rem);text-align:center}
+.mur .nb{font-variant-numeric:tabular-nums}
+.postits{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));align-items:start;gap:28px clamp(14px,3vw,24px)}
+@media (min-width:640px){ .postits{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))} }
+.postits .vide{grid-column:1/-1;justify-self:center}
+.postit{min-width:0;color:var(--encre);padding:20px clamp(14px,3vw,20px) 16px;min-height:170px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 0 rgba(20,10,61,.28);position:relative;animation:pose .5s cubic-bezier(.3,1.5,.5,1) both}
+.postit::before{content:"";position:absolute;top:-12px;left:50%;width:84px;height:24px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.7)}
+.postit.moien{outline:4px solid var(--citron);outline-offset:6px}
+.postit p{margin:0;font-family:var(--main);font-size:clamp(1.1rem,1rem + .6vw,1.4rem);line-height:1.18;overflow-wrap:anywhere;white-space:pre-line}
+.postit .qui{margin-top:auto;font-weight:800;overflow-wrap:anywhere}
+.postit img{width:100%;aspect-ratio:4/3;object-fit:cover;border:6px solid #fff;box-shadow:0 3px 0 rgba(20,10,61,.2)}
+.postit .moi{position:absolute;top:10px;right:12px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;background:var(--encre);color:var(--argile);padding:.2em .6em;border-radius:999px}
+.postit .retirer{align-self:flex-start;background:none;border:2px solid var(--encre);color:var(--encre);font:700 .78rem var(--body);border-radius:999px;padding:.25em .8em;cursor:pointer}
+.vide{max-width:32ch;text-align:center;font-family:var(--main);font-size:1.6rem;line-height:1.2;background:var(--voile);border:3px dashed var(--argile);border-radius:24px;padding:28px}
+.note{font-size:.9rem;text-align:center;max-width:52ch;opacity:.9;margin:0}
+
+@keyframes pose{from{transform:translateY(-14px) rotate(0) scale(.9)}}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+.piege{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+
+<div class="cadre">
+  <header>
+    <p class="etiquette">Ne lui dites rien</p>
+    <h1>Un mot pour <span>Lucie</span></h1>
+    <p class="chapeau">Écris lui un petit message avant son pot de départ. Tous les mots apparaîtront sur le mur de son cadeau surprise.</p>
+  </header>
+
+  <form id="formulaire" novalidate>
+    <h2 id="titreForm">Ton post it</h2>
+    <div class="champ">
+      <label for="prenom">Ton prénom</label>
+      <input type="text" id="prenom" maxlength="40" autocomplete="given-name" required>
+    </div>
+    <div class="champ">
+      <label for="message">Ton message</label>
+      <div class="postit-saisie"><textarea id="message" maxlength="280" required placeholder="Un souvenir, un merci, une blague que vous seules comprenez…"></textarea></div>
+      <span class="compte" id="compte">0 sur 280</span>
+    </div>
+    <fieldset class="couleurs">
+      <legend>Ta couleur</legend>
+      <input type="radio" name="couleur" id="c-citron" value="citron" checked><label for="c-citron" style="background:var(--citron)" title="Citron"><span class="vh">Citron</span></label>
+      <input type="radio" name="couleur" id="c-rose" value="rose"><label for="c-rose" style="background:var(--rose)" title="Rose"><span class="vh">Rose</span></label>
+      <input type="radio" name="couleur" id="c-menthe" value="menthe"><label for="c-menthe" style="background:var(--menthe)" title="Menthe"><span class="vh">Menthe</span></label>
+      <input type="radio" name="couleur" id="c-mandarine" value="mandarine"><label for="c-mandarine" style="background:var(--mandarine)" title="Mandarine"><span class="vh">Mandarine</span></label>
+      <input type="radio" name="couleur" id="c-argile" value="argile"><label for="c-argile" style="background:#fff" title="Blanc"><span class="vh">Blanc</span></label>
+    </fieldset>
+    <div class="champ">
+      <span class="etiquette" id="titrePhoto">Une photo, si tu veux</span>
+      <div class="photo">
+        <input type="file" id="fichier" accept="image/*" aria-labelledby="titrePhoto">
+        <label class="choisir" for="fichier" id="choisir">Choisir une photo</label>
+        <img id="apercu" alt="Aperçu de ta photo" hidden>
+        <button class="lien" type="button" id="sansPhoto" hidden>Retirer la photo</button>
+      </div>
+      <p class="aide" id="aidePhoto">Un souvenir avec Lucie, par exemple. Elle sera réduite avant l'envoi.</p>
+    </div>
+    <div class="piege" aria-hidden="true"><label for="site">Site</label><input type="text" id="site" name="site" tabindex="-1" autocomplete="off"></div>
+    <button class="bouton" type="submit" id="envoyer">Coller mon post it</button>
+    <p class="statut" id="statut" role="status" aria-live="polite"></p>
+    <button class="lien" type="button" id="effacer" hidden>Retirer mon post it</button>
+  </form>
+
+  <section class="mur" aria-labelledby="titreMur">
+    <h2 id="titreMur">Le mur <span class="nb" id="nb"></span></h2>
+    <div class="postits" id="postits">
+      <p class="vide" id="vide">Le mur se remplit dès qu'un premier mot est collé. Lance toi !</p>
+    </div>
+    <p class="note">Chacun peut coller un seul post it et le modifier quand il veut en revenant sur cette page.</p>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js" defer></script>
+<script>
+// Si Firebase ne se charge pas, la page le dit au lieu de rester muette.
+(() => {
+  const dire = () => { document.querySelector("#statut").textContent = "Le mur ne répond pas pour l'instant. Vérifie ta connexion, puis recharge la page."; };
+  setTimeout(() => { if (!window.basePrete) dire(); }, 8000);
+  for (const f of document.querySelectorAll("#formulaire")) f.addEventListener("submit", e => { if (!window.basePrete) { e.preventDefault(); dire(); } });
+})();
+</script>
+<script type="module">
+import { db, connexion, ecrire, doc, collection, onSnapshot, getDoc, serverTimestamp } from "../js/base.js";
+window.basePrete = true;
+const $ = s => document.querySelector(s);
+const fonds = {citron:"var(--citron)", rose:"var(--rose)", menthe:"var(--menthe)", mandarine:"var(--mandarine)", argile:"#fff"};
+let monId = null, dejaPoste = false, lectureSeule = false, derniers = [], photo = null;
+const JPEG = "data:image/jpeg;base64,";
+
+function compter(){ const n = $("#message").value.length; $("#compte").textContent = n + " sur 280"; $("#compte").classList.toggle("presque", n >= 250); }
+$("#message").addEventListener("input", compter);
+// Le post it de saisie prend la couleur choisie.
+function teindre(){ $("#formulaire").style.setProperty("--fond-postit", fonds[document.querySelector("input[name=couleur]:checked").value]); }
+for (const r of document.querySelectorAll("input[name=couleur]")) r.addEventListener("change", teindre);
+teindre();
+const fete = () => { if (typeof confetti === "function" && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+  confetti({ particleCount: 90, spread: 80, origin: { y: .7 }, colors: ["#FF5FA2","#FFD23F","#4FE3B0","#FF7A2F","#FFF4EC"] }); };
+
+// Réduit la photo à 1200 pixels sur le plus grand côté, en JPEG de qualité 0,7,
+// puis baisse la qualité jusqu'à passer sous 700 000 octets. Le document Firestore reste ainsi sous 1 Mo.
+async function reduire(fichier){
+  const url = URL.createObjectURL(fichier), img = new Image();
+  try { img.src = url; await img.decode(); } finally { URL.revokeObjectURL(url); }
+  let cote = 1200;
+  for (;;) {
+    const k = Math.min(1, cote / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    for (let q = 0.7; q > 0.25; q -= 0.1) {
+      const d = c.toDataURL("image/jpeg", q);
+      if ((d.length - JPEG.length) * 3 / 4 <= 700000) return d;
+    }
+    cote = Math.round(cote * 0.8);   // très rare : même en qualité basse c'est trop lourd, on réduit encore
+  }
+}
+
+function montrerPhoto(d){
+  photo = d;
+  $("#apercu").hidden = !d; if (d) $("#apercu").src = d; else $("#apercu").removeAttribute("src");
+  $("#sansPhoto").hidden = !d;
+  $("#choisir").textContent = d ? "Changer de photo" : "Choisir une photo";
+}
+
+$("#fichier").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  $("#aidePhoto").textContent = "Réduction de la photo…";
+  try {
+    const d = await reduire(f);
+    montrerPhoto(d);
+    $("#aidePhoto").textContent = `Photo prête, ${Math.round((d.length - JPEG.length) * 3 / 4 / 1000)} Ko. Elle part avec ton post it.`;
+  } catch(err) {
+    $("#aidePhoto").textContent = "Cette photo n'a pas pu être lue. Essaie avec une autre, en JPEG ou PNG.";
+  }
+});
+$("#sansPhoto").addEventListener("click", () => { montrerPhoto(null); $("#aidePhoto").textContent = "Pas de photo pour l'instant."; });
+
+function angle(id){ let h=0; for (const c of id) h=(h*31+c.charCodeAt(0))|0; return (Math.abs(h)%7)-3; }
+
+function rendre(docs){
+  derniers = docs;
+  const zone = $("#postits");
+  zone.textContent = "";
+  const liste = docs.map(d => ({id:d.id, ...d.data({serverTimestamps:"estimate"})})).filter(m => m.texte)
+    .sort((a,b) => (a.date ? a.date.toMillis() : 0) - (b.date ? b.date.toMillis() : 0));
+  $("#nb").textContent = liste.length ? "· " + liste.length : "";
+  if (!liste.length) {
+    const v = document.createElement("p"); v.className="vide";
+    v.textContent = "Le mur se remplit dès qu'un premier mot est collé. Lance toi !";
+    zone.appendChild(v); return;
+  }
+  for (const m of liste) {
+    const el = document.createElement("article");
+    el.className = "postit";
+    el.style.background = fonds[m.couleur] || fonds.citron;
+    el.style.transform = `rotate(${angle(m.id)}deg)`;
+    if (typeof m.photo === "string" && m.photo.startsWith(JPEG)) {
+      const im = document.createElement("img"); im.src = m.photo; im.alt = "Photo de " + (m.prenom || "l'équipe"); im.loading = "lazy";
+      el.appendChild(im);
+    }
+    const p = document.createElement("p"); p.textContent = m.texte;
+    const q = document.createElement("span"); q.className="qui"; q.textContent = m.prenom || "Quelqu'un de l'équipe";
+    el.append(p, q);
+    if (m.id === monId) { const t=document.createElement("span"); t.className="moi"; t.textContent="Toi"; el.appendChild(t); el.id="monPostit"; }
+    zone.appendChild(el);
+  }
+}
+
+function modeLecture(msg){
+  lectureSeule = true;
+  for (const id of ["prenom","message","envoyer","fichier"]) $("#"+id).disabled = true;
+  $("#statut").textContent = msg;
+}
+
+function erreur(err, defaut){
+  if (err && err.code === "trop-vite") return "Trop d'envois en peu de temps. Attends une minute, puis réessaie.";
+  if (err && err.code === "permission-denied") return "Le post it n'a pas été accepté. Vérifie le prénom, le message et la photo, puis réessaie.";
+  return defaut;
+}
+
+function colle(){
+  dejaPoste = true;
+  $("#envoyer").textContent = "Mettre à jour mon post it";
+  $("#titreForm").textContent = "Ton post it est collé";
+  $("#effacer").hidden = false;
+}
+
+$("#formulaire").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (lectureSeule) return;
+  const prenom = $("#prenom").value.trim(), texte = $("#message").value.trim();
+  if (!prenom) { $("#statut").textContent = "Ajoute ton prénom pour que Lucie sache de qui vient le mot."; $("#prenom").focus(); return; }
+  if (!texte) { $("#statut").textContent = "Écris ton message avant de le coller."; $("#message").focus(); return; }
+  // Champ piège : un robot le remplit, une personne ne le voit pas.
+  if ($("#site").value) { $("#statut").textContent = "C'est collé ! Tu peux le modifier quand tu veux."; return; }
+  if (!monId) { $("#statut").textContent = "La connexion a échoué. Recharge la page pour coller ton post it."; return; }
+  const b = $("#envoyer"); b.disabled = true; $("#statut").textContent = "Collage en cours…";
+  try {
+    const ref = doc(db, "mots", monId);
+    const couleur = document.querySelector("input[name=couleur]:checked").value;
+    await ecrire(monId, "mots/"+monId, async tx => {
+      const avant = await tx.get(ref);
+      const mot = { prenom, texte, couleur, date: avant.exists() ? avant.data().date : serverTimestamp() };
+      if (photo) mot.photo = photo;
+      return () => tx.set(ref, mot);
+    });
+    $("#statut").textContent = "C'est collé ! Tu peux le modifier quand tu veux.";
+    const premier = !dejaPoste;
+    colle(); fete();
+    // On montre le post it sur le mur, le temps que le mur se mette à jour.
+    setTimeout(() => { const el = $("#monPostit"); if (!el) return; el.classList.add("moien");
+      if (premier) el.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => el.classList.remove("moien"), 2400); }, 400);
+  } catch(err) {
+    $("#statut").textContent = erreur(err, "Le post it n'a pas pu être collé. Réessaie dans un instant.");
+  } finally { if (!lectureSeule) b.disabled = false; }
+});
+
+$("#effacer").addEventListener("click", async () => {
+  if (!monId) return;
+  try {
+    const ref = doc(db, "mots", monId);
+    await ecrire(monId, "mots/"+monId, async () => tx => tx.delete(ref));
+    dejaPoste = false; $("#message").value = ""; compter(); montrerPhoto(null);
+    $("#statut").textContent = "Ton post it a été retiré."; $("#effacer").hidden = true;
+    $("#envoyer").textContent = "Coller mon post it"; $("#titreForm").textContent = "Ton post it";
+  } catch(e) { $("#statut").textContent = erreur(e, "Impossible de le retirer pour l'instant, réessaie."); }
+});
+
+// Le mur se met à jour tout seul dès qu'un mot change. En cas de coupure, il garde ce qu'il a déjà.
+onSnapshot(collection(db, "mots"), snap => rendre(snap.docs), () => {
+  $("#statut").textContent = "Le mur ne se met plus à jour, recharge la page.";
+});
+
+try { monId = await connexion(); }
+catch(e) { modeLecture("La connexion a échoué. Recharge la page pour coller ton post it."); }
+if (monId) {
+  rendre(derniers);
+  try {
+    const s = await getDoc(doc(db, "mots", monId));
+    if (s.exists()) {
+      const d = s.data();
+      $("#prenom").value = d.prenom || $("#prenom").value; $("#message").value = d.texte || "";
+      compter();
+      const r = document.getElementById("c-"+d.couleur); if (r) { r.checked = true; teindre(); }
+      if (typeof d.photo === "string" && d.photo.startsWith(JPEG)) montrerPhoto(d.photo);
+      colle();
+    }
+  } catch(e){}
+}
+</script>
+</body>
+</html>

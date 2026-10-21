@@ -1,0 +1,16 @@
+# Sources de départ, à garder hors du dépôt public
+existant/
+lucie-sources-vscode.zip
+
+# Émulateurs Firebase
+*.log
+.firebase/
+.DS_Store
+firebase-debug*.log
+firestore-debug.log
+ui-debug.log
+
+# Dépendances et secrets locaux
+node_modules/
+.env
+.env.*

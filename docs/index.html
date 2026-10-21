@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Surprise pour Lucie</title>
+<meta name="description" content="L'équipe a préparé quelque chose pour toi, Lucie.">
+<meta property="og:title" content="Lucie, on a quelque chose à te dire…">
+<meta property="og:description" content="Une surprise de toute l'équipe Green Got.">
+<meta property="og:image" content="https://mb-green-got.github.io/d-part-lucide/assets/lucie.jpg">
+<meta name="theme-color" content="#1F3BFF">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M22 6h20v8c0 4 12 10 12 26 0 12-10 18-22 18S10 52 10 40c0-16 12-22 12-26z' fill='%23FF5FA2'/%3E%3Cpath d='M14 34h36' stroke='%23FFD23F' stroke-width='6'/%3E%3C/svg%3E">
+<link rel="preload" as="image" href="assets/lucie.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Gochi+Hand&display=swap">
+<style>
+/* Concept → un atelier de céramique en fête, raconté écran par écran comme des stories.
+   Aucun défilement, on avance d'un tap. Chaque écran a sa couleur d'émail, le four chauffe vraiment.
+   Tout est dimensionné sur la hauteur et la largeur de l'écran. */
+:root{
+  --email:#1F3BFF; --email-deep:#1426B8;
+  --rose:#FF5FA2; --citron:#FFD23F; --menthe:#4FE3B0; --mandarine:#FF7A2F;
+  --argile:#FFF4EC; --encre:#140A3D;
+  --display:"Bagel Fat One","Arial Black",system-ui,sans-serif;
+  --body:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --main:"Gochi Hand","Comic Sans MS",cursive;
+  --t-geant:clamp(2.2rem, min(12vw, 7.6dvh), 7rem);
+  --t-grand:clamp(1.8rem, min(9vw, 5.4dvh), 4.4rem);
+  --t-moyen:clamp(1.02rem, min(4.6vw, 2.5dvh), 1.45rem);
+  --t-texte:clamp(.95rem, min(4vw, 2.1dvh), 1.12rem);
+  --ressort:cubic-bezier(.3,1.4,.5,1);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none}
+body{background:var(--email);color:var(--argile);font-family:var(--body);font-size:var(--t-texte);line-height:1.42;-webkit-font-smoothing:antialiased;touch-action:manipulation;
+  transition:background-color .8s ease, color .5s ease;-webkit-tap-highlight-color:transparent}
+/* Une couleur d'émail par écran. */
+body[data-ecran="four"]{background-color:var(--encre)}
+body[data-ecran="bon"]{background-color:var(--menthe);color:var(--encre)}
+body[data-ecran="date"]{background-color:var(--rose);color:var(--encre)}
+body[data-ecran="mur"]{background-color:var(--argile);color:var(--encre)}
+body[data-ecran="fin"]{background-color:var(--encre)}
+img{max-width:100%;display:block}
+[hidden]{display:none!important}
+#ciel{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+/* Un léger grain, comme une pièce d'argile. */
+body::after{content:"";position:fixed;inset:0;z-index:4;pointer-events:none;opacity:.07;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E")}
+h1,h2,h3{font-family:var(--display);font-weight:400;line-height:.95;margin:0;text-wrap:balance}
+.etiquette{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:clamp(.66rem,min(3vw,1.5dvh),.8rem);margin:0}
+:focus-visible{outline:4px solid var(--citron);outline-offset:4px;border-radius:8px}
+body[data-ecran="bon"] :focus-visible,body[data-ecran="date"] :focus-visible,body[data-ecran="mur"] :focus-visible{outline-color:var(--encre)}
+
+.scene{position:fixed;inset:0;z-index:1}
+.ecran{position:absolute;inset:0;isolation:isolate;outline:none;
+  padding:calc(30px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(78px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(10px,2.1dvh,24px);
+  opacity:0;visibility:hidden;transform:translateX(48px) scale(.97);transition:opacity .45s, transform .6s var(--ressort), visibility 0s .6s}
+.ecran.actif{opacity:1;visibility:visible;transform:none;transition:opacity .45s, transform .6s var(--ressort), visibility 0s}
+.ecran.avant{transform:translateX(-48px) scale(.97)}
+.ecran > *{max-width:min(100%,760px)}
+/* Les éléments d'un écran arrivent l'un après l'autre. */
+.ecran.actif > *{animation:entre .6s var(--ressort) both}
+.ecran.actif > :nth-child(2){animation-delay:.06s}.ecran.actif > :nth-child(3){animation-delay:.12s}
+.ecran.actif > :nth-child(4){animation-delay:.18s}.ecran.actif > :nth-child(5){animation-delay:.24s}.ecran.actif > :nth-child(6){animation-delay:.3s}
+.ecran.actif > .lueur{animation:none}
+
+/* Progression façon stories, en haut. */
+.histoire{position:fixed;z-index:3;top:calc(10px + env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;gap:5px;max-width:760px;margin:0 auto}
+.histoire span{flex:1;height:4px;border-radius:99px;background:currentColor;opacity:.22;transition:opacity .3s}
+.histoire span.vu{opacity:.9}
+.histoire span.ici{opacity:1}
+
+.barre{position:fixed;z-index:3;left:0;right:0;bottom:0;max-width:820px;margin:0 auto;
+  padding:10px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rond{width:48px;height:48px;flex:none;border-radius:50%;border:3px solid currentColor;background:transparent;color:inherit;cursor:pointer;display:grid;place-items:center;padding:0;transition:transform .2s var(--ressort), opacity .3s, background-color .3s}
+.rond svg{width:22px;height:22px}
+.rond:hover:not([disabled]){transform:scale(1.08)}
+.rond:active:not([disabled]){transform:scale(.92)}
+.rond[disabled]{opacity:.2;cursor:default}
+.rond.plein{background:var(--citron);border-color:var(--citron);color:var(--encre)}
+.rond.appel{animation:appel 1.6s ease-in-out infinite}
+.milieu{font-weight:800;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;opacity:.75;font-variant-numeric:tabular-nums}
+.droite{display:flex;gap:10px;align-items:center}
+.son{width:40px;height:40px;border-width:2px}
+.son svg{width:18px;height:18px}
+.son .on{display:none}.son[aria-pressed="true"] .on{display:block}.son[aria-pressed="true"] .off{display:none}
+
+.bouton{font:800 clamp(1rem,min(4.4vw,2.3dvh),1.15rem)/1 var(--body);border:0;cursor:pointer;color:var(--encre);background:var(--citron);padding:1em 1.6em;border-radius:999px;box-shadow:0 6px 0 var(--encre);transition:transform .15s, box-shadow .15s, opacity .3s;text-decoration:none;display:inline-flex;gap:.5em;align-items:center;justify-content:center}
+.bouton:hover:not([disabled]){transform:translateY(-3px) rotate(-1.5deg);box-shadow:0 9px 0 var(--encre)}
+.bouton:active:not([disabled]){transform:translateY(4px);box-shadow:0 2px 0 var(--encre)}
+.bouton[disabled]{opacity:.35;cursor:not-allowed}
+.bouton.pret{animation:sautille 1.4s ease-in-out infinite}
+.lien{background:none;border:0;color:inherit;font:700 .95rem var(--body);text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:5px;cursor:pointer;padding:.4em}
+
+/* Accueil */
+.assiette{position:relative;width:min(60vw,32dvh);aspect-ratio:1;flex:none;margin-bottom:2.6dvh}
+.assiette::before{content:"";position:absolute;inset:-7%;border-radius:50%;background:repeating-conic-gradient(var(--rose) 0 15deg,var(--citron) 15deg 30deg,var(--menthe) 30deg 45deg,var(--mandarine) 45deg 60deg);box-shadow:0 18px 40px rgba(20,10,61,.35);animation:tourne 30s linear infinite}
+.assiette img{position:relative;width:100%;height:100%;object-fit:cover;border-radius:50%;border:clamp(6px,1.1dvh,10px) solid var(--argile)}
+.pastille{position:absolute;z-index:2;font-family:var(--main);font-size:clamp(.9rem,min(4.2vw,2.3dvh),1.3rem);line-height:1.05;color:var(--encre);background:var(--citron);padding:.5em .8em;border-radius:12px;transform:rotate(8deg);right:-14%;bottom:2%;box-shadow:0 4px 0 var(--encre)}
+.actif .pastille{animation:colle .7s .5s var(--ressort) both}
+.titre-geant{font-size:var(--t-geant)}
+.titre-geant .rose{color:var(--rose)}
+.titre-geant .mot{display:inline-block}
+.actif .titre-geant .mot{animation:monte .8s var(--ressort) both}
+.chapeau{font-size:var(--t-moyen);font-weight:600;max-width:30ch;margin:0}
+
+/* Four */
+.titre-grand{font-size:var(--t-grand)}
+.lueur{position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:0;transition:opacity 1s ease;
+  background:radial-gradient(ellipse 80% 55% at 50% 62%, rgba(255,122,47,.7), rgba(255,95,162,.35) 45%, transparent 75%)}
+.thermo{width:min(100%,420px)}
+.thermo .ligne{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums;font-weight:800;margin-bottom:6px;font-size:.9em}
+.jauge{height:clamp(16px,2.4dvh,24px);border-radius:999px;background:rgba(255,244,236,.12);border:3px solid var(--argile);overflow:hidden}
+.jauge span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--citron),var(--mandarine),var(--rose));transition:width .8s var(--ressort)}
+.pieces{display:flex;gap:clamp(10px,3vw,24px);justify-content:center;width:min(100%,520px)}
+.piece{flex:1 1 0;min-width:0;height:min(26vw,16dvh,150px);border:0;border-radius:20px;background:var(--argile);cursor:pointer;display:grid;place-items:center;padding:8px;position:relative;transition:transform .25s var(--ressort), background-color .4s, box-shadow .4s}
+.piece:hover{transform:translateY(-4px) rotate(-2deg)}
+.piece svg{height:82%;width:auto;animation:flotte 3.2s ease-in-out infinite}
+.piece:nth-child(2) svg{animation-delay:-1s}.piece:nth-child(3) svg{animation-delay:-2s}
+.piece.cuite{background:rgba(255,244,236,.1);box-shadow:inset 0 0 0 3px var(--citron),0 0 28px rgba(255,122,47,.45)}
+.piece.cuite svg{animation:none}
+.piece .num{position:absolute;top:6px;left:9px;font:800 .72rem var(--body);color:var(--encre);opacity:.5}
+.piece.cuite .num{color:var(--citron);opacity:1}
+.piece.choisie{transform:translateY(-6px)}
+.indice{width:min(100%,520px);min-height:clamp(110px,20dvh,190px);border-radius:24px;padding:clamp(12px,2.2dvh,22px);background:rgba(255,244,236,.08);border:3px dashed rgba(255,244,236,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:background-color .4s}
+.indice.plein{border-style:solid;border-color:var(--encre);color:var(--encre);animation:pose .5s var(--ressort)}
+.indice .txt{font-family:var(--main);font-size:clamp(1.15rem,min(5.8vw,3.2dvh),1.85rem);line-height:1.12}
+.indice .souv{font-size:.9em;font-weight:600}
+
+/* Ticket */
+.ticket{width:min(100%,520px);perspective:1200px;cursor:pointer}
+.ticket .tourne{position:relative;display:grid;transition:transform 1s var(--ressort);transform-style:preserve-3d}
+.ticket:hover:not(.ouvert) .tourne{transform:rotateY(-8deg) rotate(-1deg)}
+.ticket .face{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:26px;padding:clamp(18px,3dvh,32px);color:var(--encre);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,1.5dvh,14px);box-shadow:0 10px 0 rgba(20,10,61,.3)}
+.ticket .recto{background:repeating-linear-gradient(-45deg,var(--mandarine) 0 22px,#FF8A47 22px 44px)}
+.ticket .recto .gros{transform:rotate(-3deg)}
+.ticket .recto .doigt{width:54px;height:54px;border-radius:50%;background:var(--argile);display:grid;place-items:center;animation:tapote 1.6s ease-in-out infinite}
+.ticket .recto .doigt svg{width:26px;height:26px}
+.ticket .verso{background:var(--argile);transform:rotateY(180deg);
+  -webkit-mask:radial-gradient(circle 14px at 0 72%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 14px at 100% 72%,#0000 98%,#000) right/51% 100% no-repeat;
+  mask:radial-gradient(circle 14px at 0 72%,#0000 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 14px at 100% 72%,#0000 98%,#000) right/51% 100% no-repeat}
+.ticket.ouvert .tourne{transform:rotateY(180deg)}
+.ticket h3{font-size:clamp(1.6rem,min(8vw,4.4dvh),3rem)}
+.ticket .verso .etiquette{color:var(--email)}
+.ticket p{margin:0}
+.ticket .infos{width:100%;border-top:2px dashed var(--encre);padding-top:12px;margin:0;display:flex;justify-content:center;gap:12px 28px;flex-wrap:wrap}
+.ticket dt{font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:.7rem;color:var(--email)}
+.ticket dd{margin:2px 0 0;font-weight:700}
+.ticket .numero{font:800 .66rem var(--body);letter-spacing:.2em;opacity:.55}
+.gros{font-family:var(--display);font-size:clamp(2rem,min(10vw,6dvh),3.6rem);line-height:1}
+.aide{font-size:.9em;font-weight:600;opacity:.85;margin:0;min-height:1.4em}
+
+/* Bon à gratter */
+.bon{width:min(100%,460px);background:var(--rose);color:var(--encre);border-radius:26px;padding:clamp(22px,4dvh,40px) 24px;position:relative;display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.5dvh,14px);transform:rotate(2deg);box-shadow:0 10px 0 rgba(20,10,61,.25)}
+.bon::after{content:"";position:absolute;top:-14px;left:50%;width:110px;height:30px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,244,236,.8)}
+.bon h3{font-size:clamp(1.5rem,min(7vw,4dvh),2.4rem)}
+.bon p{margin:0;font-weight:700}
+.grattage{position:relative;width:100%;min-height:clamp(90px,15dvh,140px);border-radius:18px;background:var(--argile);display:grid;place-items:center;padding:12px;overflow:hidden}
+.bon .montant{font-family:var(--display);font-size:clamp(2rem,min(11vw,7dvh),5rem);line-height:.9;font-variant-numeric:tabular-nums;color:var(--email)}
+#grattoir{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none;transition:opacity .6s ease}
+#grattoir:active{cursor:grabbing}
+#grattoir.parti{opacity:0;pointer-events:none}
+
+/* Date */
+.date-carte{width:min(100%,460px);background:var(--argile);color:var(--encre);border-radius:26px;padding:clamp(18px,3dvh,30px);display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.8dvh,16px);box-shadow:0 10px 0 rgba(20,10,61,.25);transform:rotate(-1deg)}
+.date-carte p{margin:0;font-weight:600}
+.calendrier{width:clamp(64px,10dvh,88px);aspect-ratio:1;border-radius:16px;background:#fff;border:3px solid var(--encre);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 4px 0 var(--encre);transform:rotate(-6deg)}
+.calendrier b{background:var(--mandarine);font:800 .62rem/1 var(--body);letter-spacing:.12em;text-transform:uppercase;padding:5px 0}
+.calendrier span{flex:1;display:grid;place-items:center;font:400 clamp(1.4rem,4dvh,2.1rem)/1 var(--display)}
+.qr-bloc{display:flex;flex-direction:column;align-items:center;gap:8px}
+#qr{background:#fff;padding:8px;border-radius:12px;line-height:0;border:3px solid var(--encre)}
+#qr img,#qr canvas{width:clamp(90px,14dvh,140px);height:clamp(90px,14dvh,140px)}
+.petit{font-size:.85em;opacity:.8}
+.reponses{font-weight:800;font-size:.9em}
+.reponses:empty{display:none}
+/* Sur téléphone on y est déjà, le code ne sert à rien. */
+@media (hover:none) and (pointer:coarse){ .qr-bloc{display:none} }
+
+/* Mur */
+.mur{width:100%;display:flex;align-items:center;justify-content:center;gap:clamp(8px,3vw,20px)}
+.carte-mur{width:min(64vw,42dvh,380px);aspect-ratio:1/1.05;flex:none;position:relative;touch-action:pan-y}
+/* Une pile de post it derrière celui qu'on lit. */
+.carte-mur::before,.carte-mur::after{content:"";position:absolute;inset:0;box-shadow:0 8px 0 rgba(20,10,61,.12)}
+.carte-mur::before{background:var(--menthe);transform:rotate(7deg) translate(10px,6px)}
+.carte-mur::after{background:var(--citron);transform:rotate(-5deg) translate(-8px,4px)}
+.carte-mur.seul::before,.carte-mur.seul::after{display:none}
+.carte-mur > *{position:absolute;inset:0;z-index:1;animation:pose .45s var(--ressort) both}
+.postit{color:var(--encre);padding:clamp(16px,3dvh,26px);display:flex;flex-direction:column;justify-content:center;gap:12px;box-shadow:0 12px 0 rgba(20,10,61,.2)}
+.postit::before{content:"";position:absolute;top:-12px;left:50%;width:90px;height:26px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.8);box-shadow:0 1px 3px rgba(20,10,61,.1)}
+.postit p{margin:0;font-family:var(--main);font-size:clamp(1.1rem,min(5.6vw,3.2dvh),1.7rem);line-height:1.15;overflow-wrap:anywhere;white-space:pre-line}
+.postit .qui{font-weight:800}
+.postit .qui::before{content:"— "}
+.polaroid{background:#fff;padding:12px 12px 0;color:var(--encre);box-shadow:0 12px 0 rgba(20,10,61,.2);display:flex;flex-direction:column;margin:0}
+.polaroid img{width:100%;flex:1;min-height:0;object-fit:cover}
+.polaroid figcaption{font-family:var(--main);font-size:1.2rem;padding:8px 0 10px;min-height:14px}
+.compteur{font-weight:800;font-variant-numeric:tabular-nums;min-height:1.4em;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
+.sous{font-weight:600;margin:0;max-width:34ch}
+.tout{font:800 .9rem var(--body);color:var(--argile);background:var(--encre);border:0;border-radius:999px;padding:.65em 1.15em;cursor:pointer;transition:transform .2s var(--ressort)}
+.tout:hover{transform:translateY(-2px) rotate(-2deg)}
+
+/* Tout le mur, en grand */
+dialog.grand{width:100%;height:100%;max-width:none;max-height:none;margin:0;border:0;padding:0;background:var(--argile);color:var(--encre)}
+dialog.grand[open]{display:flex;flex-direction:column;animation:monte-feuille .45s var(--ressort)}
+dialog.grand::backdrop{background:rgba(20,10,61,.5)}
+.grand header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:calc(14px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 14px max(16px,env(safe-area-inset-left,0px));border-bottom:3px solid var(--encre)}
+.grand h2{font-size:clamp(1.5rem,6vw,2.4rem)}
+.grand .defile{flex:1;overflow:auto;overscroll-behavior:contain;padding:32px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.grille{max-width:1080px;margin:0 auto;columns:240px;column-gap:24px}
+.grille > *{break-inside:avoid;margin:0 0 32px;position:relative;display:flex}
+.grille > * > *{flex:1}
+.grille .postit{min-height:170px;justify-content:space-between;position:relative}
+.grille .postit p{font-size:1.35rem}
+.grille .polaroid img{aspect-ratio:1;flex:none}
+
+/* Fin */
+.signature{font-family:var(--display);font-size:var(--t-geant);color:var(--citron);line-height:.95;margin:0}
+.noms{font-size:var(--t-moyen);font-weight:600;max-width:34ch;margin:0}
+.noms b{color:var(--menthe);font-weight:800}
+.coeur{width:clamp(56px,9dvh,84px);height:auto;animation:bat 1.4s ease-in-out infinite}
+.actions{display:flex;flex-direction:column;align-items:center;gap:10px}
+
+@keyframes monte{from{transform:translateY(.4em) rotate(4deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes entre{from{transform:translateY(18px);opacity:0}}
+@keyframes colle{from{transform:rotate(30deg) scale(.3);opacity:0}}
+@keyframes tourne{to{transform:rotate(1turn)}}
+@keyframes flotte{50%{transform:translateY(-6px) rotate(3deg)}}
+@keyframes secoue{20%{transform:rotate(-8deg)}40%{transform:rotate(6deg)}60%{transform:rotate(-4deg)}80%{transform:rotate(2deg)}}
+@keyframes pose{from{transform:translateY(-16px) scale(.92);opacity:.4}}
+@keyframes appel{0%,100%{box-shadow:0 0 0 0 rgba(255,210,63,.75)}50%{box-shadow:0 0 0 12px rgba(255,210,63,0)}}
+@keyframes sautille{0%,100%{transform:none}50%{transform:translateY(-5px) rotate(-1.5deg)}}
+@keyframes tapote{0%,100%{transform:none}50%{transform:scale(.88)}}
+@keyframes bat{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}45%{transform:scale(1.1)}}
+@keyframes monte-feuille{from{transform:translateY(40px);opacity:0}}
+.secoue{animation:secoue .45s}
+
+@media (max-height:620px){ .pastille{display:none} .assiette{width:min(48vw,26dvh)} .calendrier,.coeur{display:none} }
+@media (min-width:900px){ .grand .defile{padding-inline:40px} }
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation:none!important;transition-duration:.01ms!important} }
+</style>
+</head>
+<body data-ecran="intro">
+<canvas id="ciel" aria-hidden="true"></canvas>
+
+<div class="histoire" id="histoire" aria-hidden="true"></div>
+
+<main class="scene" id="scene">
+  <section class="ecran actif" data-ecran="intro" aria-label="Accueil" tabindex="-1">
+    <div class="assiette">
+      <img src="assets/lucie.jpg" alt="Lucie sur une plage, tout sourire" fetchpriority="high">
+      <span class="pastille">Notre CRM<br>Boss Lady</span>
+    </div>
+    <p class="etiquette">De la part de toute l'équipe</p>
+    <h1 class="titre-geant"><span class="mot">Lucie,</span> <span class="mot" style="animation-delay:.1s">on</span> <span class="mot" style="animation-delay:.2s">a</span> <span class="mot rose" style="animation-delay:.3s">quelque chose</span> <span class="mot" style="animation-delay:.4s">à te dire…</span></h1>
+    <button class="bouton pret" type="button" id="ouvrir">Ouvrir la surprise</button>
+  </section>
+
+  <section class="ecran" data-ecran="four" aria-labelledby="tFour" tabindex="-1">
+    <div class="lueur" id="lueur" aria-hidden="true"></div>
+    <p class="etiquette">Ta mission</p>
+    <h2 class="titre-grand" id="tFour">Le grand four</h2>
+    <p class="chapeau">Touche les trois pièces pour les cuire et découvrir les indices.</p>
+    <div class="thermo" aria-live="polite">
+      <div class="ligne"><span>Température du four</span><span id="degres">20 °C</span></div>
+      <div class="jauge" role="progressbar" aria-label="Température du four" aria-valuemin="20" aria-valuemax="1280" aria-valuenow="20" id="jauge"><span></span></div>
+    </div>
+    <div class="pieces" id="pieces"></div>
+    <div class="indice" id="indice" aria-live="polite"><span class="txt">Les indices apparaîtront ici</span></div>
+    <button class="bouton" type="button" id="defourner" disabled>Défourner la surprise</button>
+  </section>
+
+  <section class="ecran" data-ecran="ticket" aria-label="Cadeau numéro 1" tabindex="-1">
+    <p class="etiquette">Cadeau numéro 1</p>
+    <div class="ticket" id="ticket" role="button" tabindex="0" aria-label="Retourner le ticket" aria-pressed="false">
+      <div class="tourne">
+        <div class="face recto">
+          <span class="etiquette">Un ticket pour toi et la bande</span>
+          <span class="gros">Retourne moi</span>
+          <span class="doigt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#140A3D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg></span>
+        </div>
+        <div class="face verso" aria-live="polite">
+          <span class="etiquette">Ticket d'atelier · Valable pour toute la bande</span>
+          <h3 id="atelierTitre"></h3>
+          <p id="atelierTexte"></p>
+          <dl class="infos" id="atelierInfos"></dl>
+          <span class="numero" aria-hidden="true">N° 0001 · LUCIE + LA BANDE</span>
+        </div>
+      </div>
+    </div>
+    <p class="aide" id="aideTicket">Touche le ticket pour le retourner</p>
+  </section>
+
+  <section class="ecran" data-ecran="bon" aria-label="Cadeau numéro 2" tabindex="-1">
+    <p class="etiquette">Cadeau numéro 2</p>
+    <article class="bon">
+      <h3>Un bon cadeau</h3>
+      <div class="grattage" data-noswipe>
+        <div class="montant" id="montant"></div>
+        <canvas id="grattoir" aria-hidden="true"></canvas>
+      </div>
+      <p id="bonTexte"></p>
+    </article>
+    <button class="lien" type="button" id="revelerBon">Gratte avec ton doigt, ou touche ici pour tout révéler</button>
+  </section>
+
+  <section class="ecran" data-ecran="date" aria-labelledby="tDate" tabindex="-1">
+    <p class="etiquette">Dernière étape</p>
+    <h2 class="titre-grand" id="tDate">Choisis ta date</h2>
+    <div class="date-carte" id="dateCarte"></div>
+  </section>
+
+  <section class="ecran" data-ecran="mur" aria-labelledby="tMur" tabindex="-1">
+    <h2 class="titre-grand" id="tMur">Le mur de l'équipe</h2>
+    <p class="sous" id="sousMur">Les mots de l'équipe arrivent ici</p>
+    <div class="mur" data-noswipe>
+      <button class="rond" type="button" id="murPrec" aria-label="Mot précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="carte-mur" id="carteMur" aria-live="polite"></div>
+      <button class="rond" type="button" id="murSuiv" aria-label="Mot suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="compteur"><span id="compteur"></span><button class="tout" type="button" id="voirTout" hidden>Voir tout le mur</button></div>
+  </section>
+
+  <section class="ecran" data-ecran="fin" aria-labelledby="tFin" tabindex="-1">
+    <svg class="coeur" viewBox="0 0 64 56" aria-hidden="true"><path d="M32 54S2 36 2 17C2 8 9 2 17 2c6 0 11 3 15 9 4-6 9-9 15-9 8 0 15 6 15 15 0 19-30 37-30 37z" fill="#FF5FA2"/><path d="M14 14c2-4 6-5 9-4" stroke="#FFF4EC" stroke-width="4" stroke-linecap="round" fill="none"/></svg>
+    <h2 class="signature" id="tFin"></h2>
+    <p class="noms" id="noms"></p>
+    <div class="actions">
+      <a class="bouton" id="finDate" target="_blank" rel="noopener">Choisir mes dates</a>
+      <button class="lien" type="button" id="recommencer">Revoir depuis le début</button>
+    </div>
+  </section>
+</main>
+
+<nav class="barre" aria-label="Navigation">
+  <button class="rond" type="button" id="prec" aria-label="Écran précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+  <span class="milieu" id="position"></span>
+  <div class="droite">
+    <button class="rond son" type="button" id="son" aria-pressed="false" aria-label="Activer le son">
+      <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="m22 9-6 6M16 9l6 6"/></svg>
+      <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>
+    </button>
+    <button class="rond plein" type="button" id="suiv" aria-label="Écran suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
+  </div>
+</nav>
+
+<dialog class="grand" id="toutMur" aria-labelledby="tTout">
+  <header>
+    <h2 id="tTout">Tout le mur</h2>
+    <button class="rond" type="button" id="fermerTout" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </header>
+  <div class="defile"><div class="grille" id="grille"></div></div>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* =========================================================
+   TOUT CE QUI SE MODIFIE EST ICI
+   ========================================================= */
+const CADEAU = {
+  atelier: {
+    titre: "Atelier peinture sur céramique",
+    texte: "On le fait toutes ensemble, à la date que tu choisis. On peint chacune notre pièce, on boit un verre pendant que ça sèche, et on repart avec un souvenir fait main.",
+    lieu: "Un café céramique à Paris",
+    date: "C'est toi qui choisis"
+  },
+  lienDate: new URL("date/", location.href).href,   // construite à partir de l'adresse du site
+  bon: {
+    montant: "",                    // par exemple "120 €", vide affiche « Carte blanche »
+    texte: "Pour te faire plaisir, c'est toi qui choisis."
+  },
+  indices: [
+    { indice: "Il y aura de la peinture, mais pas sur les murs.", souvenir: "Notre CRM Boss Lady, couronnée le jour de son anniversaire." },
+    { indice: "Tu repartiras avec un objet fait de tes mains, plus ou moins réussi.", souvenir: "Celle qui a fait partir les tickets d'or de la levée." },
+    { indice: "On boira un verre pendant que ça sèche.", souvenir: "Une vraie baroudeuse, il paraît." }
+  ],
+  // La photo de Lucie s'affiche en premier, puis les post it de l'équipe en alternance avec les photos suivantes.
+  // Les photos jointes à un mot depuis la carte de l'équipe s'affichent juste après ce mot.
+  // Pour ajouter une photo, dépose la dans assets/photos et ajoute une ligne, par exemple
+  // { type: "photo", src: "assets/photos/pot-de-depart.jpg", legende: "" },
+  mur: [
+    { type: "photo", src: "assets/lucie.jpg", legende: "" }
+  ],
+  fin: {
+    titre: "Merci pour tout, Lucie",
+    texte: "Tu vas nous manquer."       // affiché sous les prénoms de l'équipe, vide pour ne rien afficher
+  },
+  signatures: ""                    // prénoms en plus de ceux du mur, par exemple "Paul, Zoé"
+};
+/* ========================================================= */
+
+const reduit = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = s => document.querySelector(s);
+const couleurs = ["#FF5FA2","#FFD23F","#4FE3B0","#FF7A2F","#FFF4EC"];
+const memoire = { lire(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }, ecrire(k,v){ try{ localStorage.setItem(k,v); }catch(e){} } };
+
+/* Le ciel de formes, qui s'écartent du doigt */
+let cielOpacite=.5;
+(() => {
+  const c=$("#ciel"), x=c.getContext("2d"); let w,h,formes=[],souris={x:-999,y:-999};
+  const taille=()=>{ const r=devicePixelRatio||1; w=innerWidth; h=innerHeight; c.width=w*r; c.height=h*r; x.setTransform(r,0,0,r,0,0);
+    const n=Math.round(Math.min(22,w/45));
+    formes=Array.from({length:n},(_,i)=>({x:Math.random()*w,y:Math.random()*h,r:8+Math.random()*22,vx:(Math.random()-.5)*.35,vy:(Math.random()-.5)*.35,a:Math.random()*6,va:(Math.random()-.5)*.01,t:i%4,c:couleurs[i%4]})); };
+  const dessine=f=>{ x.save(); x.translate(f.x,f.y); x.rotate(f.a); x.fillStyle=f.c; x.strokeStyle=f.c; x.lineWidth=6; x.lineCap="round"; x.beginPath();
+    if(f.t===0){x.arc(0,0,f.r,0,Math.PI*2);x.fill();}
+    else if(f.t===1){for(let k=0;k<10;k++){const rr=k%2?f.r*.45:f.r;x.lineTo(Math.cos(k*Math.PI/5)*rr,Math.sin(k*Math.PI/5)*rr);}x.closePath();x.fill();}
+    else if(f.t===2){x.moveTo(-f.r,0);x.bezierCurveTo(-f.r/2,-f.r,f.r/2,f.r,f.r,0);x.stroke();}
+    else{x.rect(-f.r*.7,-f.r*.7,f.r*1.4,f.r*1.4);x.fill();} x.restore(); };
+  const boucle=()=>{ x.clearRect(0,0,w,h);
+    for(const f of formes){ const dx=f.x-souris.x,dy=f.y-souris.y,d=Math.hypot(dx,dy)||1;
+      if(d<130){f.vx+=dx/d*.12;f.vy+=dy/d*.12;} f.vx*=.985; f.vy*=.985; f.x+=f.vx; f.y+=f.vy; f.a+=f.va;
+      if(Math.abs(f.vx)<.15)f.vx+=(Math.random()-.5)*.05; if(Math.abs(f.vy)<.15)f.vy+=(Math.random()-.5)*.05;
+      if(f.x<-40)f.x=w+40; if(f.x>w+40)f.x=-40; if(f.y<-40)f.y=h+40; if(f.y>h+40)f.y=-40;
+      x.globalAlpha=cielOpacite; dessine(f); }
+    if(!reduit && !document.hidden) requestAnimationFrame(boucle); };
+  addEventListener("resize",()=>{ taille(); if(reduit) boucle(); }); addEventListener("pointermove",e=>{souris={x:e.clientX,y:e.clientY};});
+  // L'animation se met en pause quand l'onglet est caché, et repart au retour.
+  document.addEventListener("visibilitychange",()=>{ if(!document.hidden && !reduit) requestAnimationFrame(boucle); });
+  taille(); boucle();
+})();
+
+/* Le son, coupé par défaut */
+let sonActif=false, audio;
+const bip=(f=520,duree=.12,type="triangle")=>{ if(!sonActif) return;
+  try{ audio=audio||new (window.AudioContext||window.webkitAudioContext)(); const o=audio.createOscillator(),g=audio.createGain();
+    o.type=type; o.frequency.value=f; g.gain.setValueAtTime(.18,audio.currentTime); g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duree);
+    o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime+duree); }catch(e){} };
+const melodie=notes=>notes.forEach((f,i)=>setTimeout(()=>bip(f,.18),i*130));
+$("#son").addEventListener("click",e=>{ sonActif=!sonActif; const b=e.currentTarget; b.setAttribute("aria-pressed",sonActif); b.setAttribute("aria-label",sonActif?"Couper le son":"Activer le son"); bip(660); });
+const fete=(fort=false)=>{ if(reduit||typeof confetti!=="function") return; const b={colors:couleurs,disableForReducedMotion:true,zIndex:5};
+  confetti({...b,particleCount:fort?150:50,spread:fort?100:70,origin:{y:.65}});
+  if(fort){ setTimeout(()=>confetti({...b,particleCount:80,angle:60,spread:70,origin:{x:0,y:.8}}),250); setTimeout(()=>confetti({...b,particleCount:80,angle:120,spread:70,origin:{x:1,y:.8}}),400); } };
+
+/* Contenu */
+const A=CADEAU.atelier;
+$("#atelierTitre").textContent=A.titre; $("#atelierTexte").textContent=A.texte;
+for(const [t,v] of [["Où",A.lieu],["Quand",A.date]]){ const d=document.createElement("div"), dt=document.createElement("dt"), dd=document.createElement("dd"); dt.textContent=t; dd.textContent=v; d.append(dt,dd); $("#atelierInfos").appendChild(d); }
+$("#montant").textContent=CADEAU.bon.montant||"Carte blanche"; $("#bonTexte").textContent=CADEAU.bon.texte;
+$("#tFin").textContent=CADEAU.fin.titre;
+const lien=CADEAU.lienDate && !CADEAU.lienDate.startsWith("__") ? CADEAU.lienDate : "";
+if(lien){
+  $("#dateCarte").innerHTML=`<div class="calendrier" aria-hidden="true"><b>Atelier</b><span>?</span></div>
+     <p>Coche toutes les dates qui te vont. On garde celle où tu es dispo avec le plus de monde.</p>
+     <a class="bouton" id="lienDate" target="_blank" rel="noopener">Choisir mes dates</a>
+     <span class="reponses" id="reponses" aria-live="polite"></span>
+     <div class="qr-bloc"><div id="qr" aria-hidden="true"></div><p class="petit">Ou scanne le code avec ton téléphone</p></div>`;
+  $("#lienDate").href=lien; $("#finDate").href=lien;
+  if(window.QRCode) new QRCode($("#qr"),{text:lien,width:300,height:300,colorDark:"#140A3D",colorLight:"#ffffff"});
+} else { $("#dateCarte").innerHTML=`<p>Le sondage des dates arrive très vite.</p>`; $("#finDate").hidden=true; }
+
+/* Navigation écran par écran */
+if(!CADEAU.mur.length) document.querySelector('[data-ecran="mur"]').remove();
+const ecrans=[...document.querySelectorAll(".ecran")];
+const idx=n=>ecrans.findIndex(e=>e.dataset.ecran===n);
+const verrou=idx("four");          // on ne passe le four qu'en défournant
+// Une fois le four passé, Lucie n'a pas à le refaire quand elle revient sur le site.
+let ici=0, fourOk=memoire.lire("lucie-four")==="1";
+const histoire=$("#histoire"); ecrans.forEach(()=>histoire.appendChild(document.createElement("span")));
+const clairs=["bon","date","mur"];
+function peutAller(i){ return i>=0 && i<ecrans.length && (i<=verrou || fourOk); }
+function aller(i, focus=true){
+  if(!peutAller(i)) return;
+  ecrans.forEach((e,k)=>{ e.classList.toggle("actif",k===i); e.classList.toggle("avant",k<i); e.inert=k!==i; });
+  ici=i;
+  const nom=ecrans[i].dataset.ecran; document.body.dataset.ecran=nom; cielOpacite=clairs.includes(nom)?.3:.5;
+  [...histoire.children].forEach((p,k)=>{ p.className=k<i?"vu":k===i?"ici":""; });
+  $("#position").textContent=`${i+1} sur ${ecrans.length}`;
+  $("#prec").disabled=i===0; $("#suiv").disabled=!peutAller(i+1);
+  $("#suiv").classList.remove("appel");
+  if(focus) ecrans[i].focus({preventScroll:true});
+  arrive(nom);
+}
+// Le bouton suivant clignote doucement quand l'écran a livré sa surprise.
+const appel=()=>{ if(!$("#suiv").disabled) $("#suiv").classList.add("appel"); };
+$("#suiv").addEventListener("click",()=>{ aller(ici+1); bip(500); });
+$("#prec").addEventListener("click",()=>{ aller(ici-1); bip(420); });
+$("#ouvrir").addEventListener("click",()=>{ aller(1); bip(500); });
+addEventListener("keydown",e=>{ if($("#toutMur").open) return;
+  if(e.key==="ArrowRight") $("#suiv").click(); if(e.key==="ArrowLeft") $("#prec").click(); });
+// Glisser pour changer d'écran, sauf là où le doigt sert déjà (grattage, mur).
+let x0=null,y0=null;
+$("#scene").addEventListener("touchstart",e=>{ if(e.target.closest("[data-noswipe]")){ x0=null; return; } x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+$("#scene").addEventListener("touchend",e=>{ if(x0===null) return; const dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0;
+  if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.5){ if(dx<0 && !$("#suiv").disabled) $("#suiv").click(); if(dx>0 && !$("#prec").disabled) $("#prec").click(); } x0=null; },{passive:true});
+
+let feteTicket=false, feteFin=false;
+function arrive(n){
+  if(["date","mur","fin"].includes(n)) ecouterMur();
+  if(n==="ticket" && !feteTicket){ feteTicket=true; setTimeout(()=>fete(true),300); melodie([523,659,784]); }
+  if(n==="ticket" && $("#ticket").classList.contains("ouvert")) appel();
+  if(n==="bon"){ peindreGrattoir(); if(bonOk) appel(); }
+  if(n==="date"){ compterReponses(); setTimeout(()=>{ if(ecrans[ici].dataset.ecran==="date") appel(); },2500); }
+  if(n==="mur") montrerMot(0);
+  if(n==="fin"){ ecrireNoms(); if(!feteFin){ feteFin=true; setTimeout(()=>fete(true),300); melodie([523,659,784,1046]); } }
+}
+
+/* Le four */
+const vases=[
+  `<svg viewBox="0 0 120 140" aria-hidden="true"><path d="M44 8h32v14c0 8 30 22 30 62 0 30-22 48-46 48S14 114 14 84c0-40 30-54 30-62z" fill="#FF5FA2"/><path d="M18 76h84" stroke="#FFD23F" stroke-width="10"/><circle cx="40" cy="104" r="7" fill="#1F3BFF"/><circle cx="62" cy="110" r="7" fill="#1F3BFF"/><circle cx="84" cy="102" r="7" fill="#1F3BFF"/></svg>`,
+  `<svg viewBox="0 0 120 140" aria-hidden="true"><path d="M20 30h80l-8 92c-1 8-8 12-16 12H44c-8 0-15-4-16-12z" fill="#4FE3B0"/><path d="M100 50c20 0 20 40 0 40" fill="none" stroke="#4FE3B0" stroke-width="10"/><path d="M26 64q17-12 34 0t34 0" fill="none" stroke="#FF7A2F" stroke-width="8"/><path d="M28 94q16-12 32 0t32 0" fill="none" stroke="#1F3BFF" stroke-width="8"/></svg>`,
+  `<svg viewBox="0 0 120 140" aria-hidden="true"><ellipse cx="60" cy="96" rx="52" ry="30" fill="#FFD23F"/><path d="M8 92c0 26 24 40 52 40s52-14 52-40" fill="#FF7A2F"/><ellipse cx="60" cy="92" rx="38" ry="18" fill="#FFF4EC" stroke="#140A3D" stroke-width="3"/><path d="M44 60c0-20 32-20 32 0" fill="none" stroke="#FF5FA2" stroke-width="10" stroke-linecap="round"/></svg>`
+];
+const noms=["le vase rose","la tasse menthe","le bol citron"], fondsIndice=["var(--rose)","var(--menthe)","var(--citron)"];
+CADEAU.indices.forEach((d,i)=>{ const b=document.createElement("button"); b.className="piece"; b.type="button"; b.id="piece"+i;
+  b.setAttribute("aria-label",`Enfourner ${noms[i]}`); b.innerHTML=`<span class="num" aria-hidden="true">${i+1}</span>`+vases[i]; b.addEventListener("click",()=>cuire(i,b)); $("#pieces").appendChild(b); });
+let cuites=0;
+// Le four chauffe à chaque pièce : jauge, température et lueur orange derrière l'écran.
+function chauffer(){
+  const t=Math.round(20+(1280-20)*cuites/3);
+  $("#degres").textContent=t.toLocaleString("fr-FR")+" °C"; $("#jauge").setAttribute("aria-valuenow",t); $("#jauge span").style.width=(cuites/3*100)+"%";
+  $("#lueur").style.opacity=cuites/3;
+  if(cuites===3){ $("#defourner").disabled=false; $("#defourner").classList.add("pret"); }
+}
+function cuire(i,b){
+  const z=$("#indice"), d=CADEAU.indices[i];
+  if(!b.classList.contains("cuite")){
+    b.classList.add("secoue","cuite"); b.setAttribute("aria-label",`Relire l'indice de ${noms[i]}`); setTimeout(()=>b.classList.remove("secoue"),450); cuites++;
+    chauffer(); bip(420+cuites*140); fete(false);
+  }
+  document.querySelectorAll(".piece").forEach(p=>p.classList.toggle("choisie",p===b));
+  z.classList.remove("plein"); void z.offsetWidth; z.classList.add("plein"); z.style.background=fondsIndice[i];
+  z.innerHTML=`<span class="etiquette">Indice ${i+1} sur 3</span><span class="txt"></span><span class="souv"></span>`;
+  z.querySelector(".txt").textContent=d.indice; z.querySelector(".souv").textContent=d.souvenir;
+}
+if(fourOk){ document.querySelectorAll(".piece").forEach((b,i)=>{ b.classList.add("cuite"); b.setAttribute("aria-label",`Relire l'indice de ${noms[i]}`); }); cuites=3; chauffer(); }
+$("#defourner").addEventListener("click",()=>{ fourOk=true; memoire.ecrire("lucie-four","1"); aller(verrou+1); });
+
+/* Ticket */
+let ticketVu=false;
+const retourner=()=>{ const t=$("#ticket"), ouvert=t.classList.toggle("ouvert"); t.setAttribute("aria-pressed",ouvert); bip(600);
+  $("#aideTicket").textContent=ouvert?"Touche encore pour le retourner, ou passe à la suite":"Touche le ticket pour le retourner";
+  if(ouvert){ appel(); if(!ticketVu){ ticketVu=true; fete(false); } } };
+$("#ticket").addEventListener("click",retourner);
+$("#ticket").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); e.stopPropagation(); retourner(); } });
+
+/* Bon à gratter */
+let bonOk=false, gratte=false, coups=0, dernier=null;
+const grattoir=$("#grattoir"), gx=grattoir.getContext("2d",{willReadFrequently:true});
+function peindreGrattoir(){
+  if(bonOk || gratte) return;     // déjà commencé, on garde les traces du doigt
+  const r=grattoir.getBoundingClientRect(), d=devicePixelRatio||1; if(!r.width) return;
+  grattoir.width=Math.round(r.width*d); grattoir.height=Math.round(r.height*d); gx.setTransform(d,0,0,d,0,0);
+  gx.globalCompositeOperation="source-over";
+  const g=gx.createLinearGradient(0,0,r.width,r.height); g.addColorStop(0,"#FFD23F"); g.addColorStop(1,"#FF7A2F");
+  gx.fillStyle=g; gx.fillRect(0,0,r.width,r.height);
+  gx.fillStyle="rgba(255,244,236,.45)";
+  for(let y=8;y<r.height;y+=16) for(let x=(y/16%2)*8+8;x<r.width;x+=16){ gx.beginPath(); gx.arc(x,y,2,0,Math.PI*2); gx.fill(); }
+  gx.fillStyle="#140A3D"; gx.textAlign="center"; gx.textBaseline="middle";
+  gx.font=`400 ${Math.min(34,r.width/9)}px "Bagel Fat One", "Arial Black", sans-serif`; gx.fillText("Gratte ici",r.width/2,r.height/2-8);
+  gx.font=`800 ${Math.min(13,r.width/26)}px "Bricolage Grotesque", sans-serif`; gx.fillText("AVEC TON DOIGT",r.width/2,r.height/2+20);
+}
+function revelerBon(){
+  if(bonOk) return; bonOk=true; grattoir.classList.add("parti"); $("#revelerBon").hidden=true;
+  fete(true); melodie([659,784,988]); if(ecrans[ici].dataset.ecran==="bon") appel();
+}
+function trait(e){
+  const r=grattoir.getBoundingClientRect(), p={x:e.clientX-r.left,y:e.clientY-r.top};
+  gx.globalCompositeOperation="destination-out"; gx.lineCap=gx.lineJoin="round"; gx.lineWidth=Math.max(36,r.width/9);
+  gx.beginPath(); gx.moveTo((dernier||p).x,(dernier||p).y); gx.lineTo(p.x+.1,p.y); gx.stroke(); dernier=p; gratte=true;
+  if(++coups%10===0){
+    // On mesure la part grattée sur un pixel sur 24 : à la moitié, tout se dévoile.
+    const data=gx.getImageData(0,0,grattoir.width,grattoir.height).data; let vide=0,n=0;
+    for(let k=3;k<data.length;k+=96){ n++; if(data[k]===0) vide++; }
+    if(vide/n>.5) revelerBon();
+    else if(coups%40===0) bip(900+Math.random()*200,.04,"sine");
+  }
+}
+grattoir.addEventListener("pointerdown",e=>{ if(bonOk) return; grattoir.setPointerCapture(e.pointerId); dernier=null; trait(e); });
+grattoir.addEventListener("pointermove",e=>{ if(!bonOk && grattoir.hasPointerCapture(e.pointerId)) trait(e); });
+grattoir.addEventListener("pointerup",()=>{ dernier=null; });
+$("#revelerBon").addEventListener("click",revelerBon);
+if(document.fonts) document.fonts.ready.then(peindreGrattoir);
+addEventListener("resize",peindreGrattoir);
+
+/* Données en direct : les mots du mur et les réponses au sondage */
+let base=null;
+const chargerBase=()=> base ||= import("./js/base.js").catch(e=>{ base=null; throw e; });
+function compterReponses(){
+  const z=$("#reponses"); if(!z) return;
+  chargerBase().then(({db,collection,getDocs})=>getDocs(collection(db,"dispos"))).then(s=>{
+    const n=s.docs.filter(d=>(d.data().dates||[]).length).length;
+    z.textContent = n ? (n===1?"Une personne a déjà répondu":`${n} personnes ont déjà répondu`) : "";
+  }).catch(()=>{});
+}
+
+/* Mur, un mot à la fois */
+let mot=0, mots=[], ecoute=null, signature=""; const fondsPost={citron:"#FFD23F",menthe:"#4FE3B0",rose:"#FF5FA2",mandarine:"#FF7A2F",argile:"#FFFFFF"};
+// La photo de Lucie d'abord, puis un post it (suivi de sa photo s'il en a une), une photo, un post it, et ainsi de suite.
+function liste(){
+  const P=CADEAU.mur, L=P.slice(0,1);
+  for(let k=0;k<Math.max(mots.length,P.length-1);k++){ if(mots[k]) L.push(...mots[k]); if(P[k+1]) L.push(P[k+1]); }
+  return L;
+}
+function element(m,k){
+  const r=((k*37)%7)-3;
+  if(m.type==="photo"){ const f=document.createElement("figure"); f.className="polaroid"; f.style.transform=`rotate(${r}deg)`;
+    const im=document.createElement("img"); im.src=m.src; im.alt=m.alt||m.legende||"Photo de l'équipe"; im.decoding="async"; const c=document.createElement("figcaption"); c.textContent=m.legende||"";
+    f.append(im,c); return f; }
+  const p=document.createElement("div"); p.className="postit"; p.style.background=fondsPost[m.couleur]||Object.values(fondsPost)[k%5]; p.style.transform=`rotate(${r}deg)`;
+  const t=document.createElement("p"); t.textContent=m.texte; const q=document.createElement("span"); q.className="qui"; q.textContent=m.qui||"L'équipe"; p.append(t,q); return p;
+}
+function montrerMot(i){
+  const L=liste(); if(!L.length) return; mot=(i+L.length)%L.length; const z=$("#carteMur"); z.textContent="";
+  const el=element(L[mot],mot); z.appendChild(el); z.classList.toggle("seul",L.length<2);
+  if(el.classList.contains("postit")){
+    // Un long mot rétrécit jusqu'à tenir dans le post it.
+    const t=el.querySelector("p"), q=el.querySelector(".qui"), cs=getComputedStyle(el), place=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(cs.rowGap||0);
+    let taille=parseFloat(getComputedStyle(t).fontSize);
+    while(t.offsetHeight+q.offsetHeight>place && taille>11){ taille-=1; t.style.fontSize=taille+"px"; } }
+  $("#compteur").textContent=L.length>1?`${mot+1} sur ${L.length}`:"";
+  $("#murPrec").hidden=$("#murSuiv").hidden=L.length<2;
+  $("#voirTout").hidden=L.length<3;
+  $("#sousMur").textContent= mots.length ? (mots.length===1?"Un mot de l'équipe, rien que pour toi":`${mots.length} mots de l'équipe, rien que pour toi`) : "Les mots de l'équipe arrivent ici";
+}
+// Les mots de la carte arrivent en direct à partir de l'écran des dates, et l'écoute reste ouverte jusqu'à la fin.
+// Si la base ne répond pas, le mur garde ce qu'il affiche déjà.
+function ecouterMur(){
+  if(ecoute) return; ecoute=true;
+  chargerBase().then(({db,collection,onSnapshot})=>{
+    onSnapshot(collection(db,"mots"), s=>{
+      const avant=liste()[mot];
+      const liste_=s.docs.map(d=>({id:d.id,...d.data({serverTimestamps:"estimate"})})).filter(m=>m.texte)
+        .sort((a,b)=>(a.date?a.date.toMillis():0)-(b.date?b.date.toMillis():0));
+      const photo=m=>typeof m.photo==="string"&&m.photo.startsWith("data:image/jpeg;base64,")?m.photo:"";
+      const sig=JSON.stringify(liste_.map(m=>[m.id,m.prenom,m.texte,m.couleur,photo(m).length,photo(m).slice(-40)])); if(sig===signature) return; signature=sig;
+      mots=liste_.map(m=>{ const p={type:"mot",id:m.id,texte:m.texte,qui:m.prenom,couleur:m.couleur};
+        return photo(m) ? [p,{type:"photo",id:m.id+"/photo",src:photo(m),legende:m.prenom||"",alt:"Photo de "+(m.prenom||"l'équipe")}] : [p]; });
+      const k=liste().findIndex(x=>x===avant||(avant&&avant.id&&x.id===avant.id));
+      const n=ecrans[ici].dataset.ecran;
+      if(n==="mur") montrerMot(k<0?mot:k);
+      if(n==="fin") ecrireNoms();
+      if($("#toutMur").open) remplirGrille();
+    },()=>{});
+  }).catch(()=>{ ecoute=null; });
+}
+$("#murPrec").addEventListener("click",()=>{ montrerMot(mot-1); bip(480); });
+$("#murSuiv").addEventListener("click",()=>{ montrerMot(mot+1); bip(560); });
+// Sur le mur, glisser passe d'un mot à l'autre.
+let mx=null;
+$("#carteMur").addEventListener("touchstart",e=>{ mx=e.touches[0].clientX; },{passive:true});
+$("#carteMur").addEventListener("touchend",e=>{ if(mx===null) return; const dx=e.changedTouches[0].clientX-mx; mx=null;
+  if(Math.abs(dx)>40 && liste().length>1){ montrerMot(mot+(dx<0?1:-1)); bip(dx<0?560:480); } },{passive:true});
+
+function remplirGrille(){ const g=$("#grille"); g.textContent=""; liste().forEach((m,k)=>{ const w=document.createElement("div"); const el=element(m,k); if(m.type==="photo") el.querySelector("img").loading="lazy"; w.appendChild(el); g.appendChild(w); }); }
+$("#voirTout").addEventListener("click",()=>{ remplirGrille(); $("#toutMur").showModal(); bip(660); });
+$("#fermerTout").addEventListener("click",()=>$("#toutMur").close());
+
+/* Fin, signée par celles et ceux qui ont écrit */
+function ecrireNoms(){
+  const vus=new Set(), tous=[];
+  for(const n of [...mots.map(g=>g[0].qui), ...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(p.toLowerCase())){ vus.add(p.toLowerCase()); tous.push(p); } }
+  const z=$("#noms"); z.textContent="";
+  if(tous.length){
+    const parts=new Intl.ListFormat("fr",{type:"conjunction"}).formatToParts([...tous,"toute l'équipe"]);
+    z.append("De la part de ");
+    parts.forEach((p,k)=>{ if(p.type==="element" && k<parts.length-1){ const b=document.createElement("b"); b.textContent=p.value; z.appendChild(b); } else z.append(p.value); });
+    z.append(".");
+  } else z.textContent="De la part de toute l'équipe.";
+  if(CADEAU.fin.texte) z.append(document.createElement("br"), CADEAU.fin.texte);
+}
+$("#recommencer").addEventListener("click",()=>aller(0));
+aller(0,false);
+</script>
+</body>
+</html>

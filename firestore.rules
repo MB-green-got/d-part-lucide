@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// Règles de sécurité de la base Firestore du cadeau de Lucie.
+// Publiées avec npx firebase-tools deploy --only firestore:rules
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function connecte() { return request.auth != null; }
+    // Les visiteurs des pages publiques reçoivent un identifiant anonyme.
+    function anonyme() { return connecte() && request.auth.token.firebase.sign_in_provider == 'anonymous'; }
+    function moi(uid) { return anonyme() && request.auth.uid == uid; }
+    function admin() {
+      return connecte() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function texte(v, max) { return v is string && v.size() > 0 && v.size() <= max; }
+
+    // Chaque écriture anonyme passe par le compteur limites/{uid}, écrit dans la même transaction.
+    // Le compteur nomme la cible, donc une transaction ne peut écrire qu'un seul document.
+    function limite(cible) {
+      let l = getAfter(/databases/$(database)/documents/limites/$(request.auth.uid)).data;
+      return l.maj == request.time && l.cible == cible;
+    }
+
+    // Au plus 10 écritures par minute et par navigateur.
+    match /limites/{uid} {
+      allow read: if moi(uid);
+      allow create: if moi(uid) && compteurNeuf();
+      allow update: if moi(uid) && (compteurNeuf() && resource.data.debut + duration.value(60, 's') < request.time
+                                    || compteurSuite());
+    }
+    function compteurForme() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['debut', 'n', 'maj', 'cible']) && d.maj == request.time && d.cible is string;
+    }
+    function compteurNeuf() {
+      return compteurForme() && request.resource.data.debut == request.time && request.resource.data.n == 1;
+    }
+    function compteurSuite() {
+      return compteurForme() && request.resource.data.debut == resource.data.debut
+        && request.resource.data.n == resource.data.n + 1 && request.resource.data.n <= 10;
+    }
+
+    // Un mot par navigateur, rangé sous l'identifiant anonyme de son auteur.
+    // Il peut porter une photo, réduite par le navigateur et enregistrée en base64.
+    match /mots/{uid} {
+      allow read: if true;
+      allow create: if moi(uid) && limite('mots/' + uid) && motValide()
+                    && request.resource.data.date == request.time;
+      allow update: if (admin() || moi(uid) && limite('mots/' + uid)) && motValide()
+                    && request.resource.data.date == resource.data.date;
+      allow delete: if admin() || moi(uid) && limite('mots/' + uid);
+    }
+    function motValide() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['prenom', 'texte', 'couleur', 'date', 'photo'])
+        && d.keys().hasAll(['prenom', 'texte', 'couleur', 'date'])
+        && texte(d.prenom, 40) && texte(d.texte, 280)
+        && d.couleur in ['citron', 'rose', 'menthe', 'mandarine', 'argile']
+        && (!('photo' in d) || d.photo is string && d.photo.size() < 950000);
+    }
+
+    // Les dates cochées par chaque personne.
+    match /dispos/{uid} {
+      allow read: if true;
+      allow create, update: if moi(uid) && limite('dispos/' + uid) && dispoValide();
+      allow delete: if admin() || moi(uid) && limite('dispos/' + uid);
+    }
+    function dispoValide() {
+      let d = request.resource.data;
+      return d.keys().hasOnly(['prenom', 'dates']) && d.keys().hasAll(['prenom', 'dates'])
+        && texte(d.prenom, 40) && d.dates is list && d.dates.size() <= 100;
+    }
+
+    // Les créneaux proposés, ajoutés depuis la page admin et qu'on ne peut plus modifier.
+    match /creneaux/{id} {
+      allow read: if true;
+      allow create: if admin() && creneauValide(id);
+      allow delete: if admin();
+    }
+    function creneauValide(id) {
+      let d = request.resource.data;
+      let slugs = {'En soirée': 'ensoiree', 'Le midi': 'lemidi', "L'après midi": 'lapresmidi', 'Le matin': 'lematin'};
+      return d.keys().hasOnly(['date', 'moment']) && d.keys().hasAll(['date', 'moment'])
+        && d.date is string && d.date.matches('^20[0-9]{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$')
+        && d.moment in slugs && id == d.date + '-' + slugs[d.moment];
+    }
+
+    // La liste des comptes administrateurs se remplit à la main dans la console.
+    match /admins/{uid} {
+      allow read: if connecte() && request.auth.uid == uid;
+    }
+  }
+}

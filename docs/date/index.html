@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Date de l'atelier céramique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Gochi+Hand&display=swap">
+<style>
+/* Concept → le planning de l'atelier, une rangée de tickets datés qu'on coche.
+   Même univers que le cadeau, bleu émail et couleurs d'émaux. */
+:root{
+  --email:#1F3BFF; --email-deep:#1426B8;
+  --rose:#FF5FA2; --citron:#FFD23F; --menthe:#4FE3B0; --mandarine:#FF7A2F;
+  --argile:#FFF4EC; --encre:#140A3D; --voile:rgba(255,244,236,.18);
+  --display:"Bagel Fat One","Arial Black",system-ui,sans-serif;
+  --body:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --main:"Gochi Hand","Comic Sans MS",cursive;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{overflow-x:clip}
+body{background:var(--email);color:var(--argile);font-family:var(--body);font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:clamp(36px,6vw,72px)}
+.cadre{max-width:980px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:clamp(28px,4vw,44px)}
+h1,h2{font-family:var(--display);font-weight:400;line-height:.95;margin:0;text-wrap:balance}
+header{text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px}
+.etiquette{font-weight:800;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;margin:0}
+h1{font-size:clamp(2.6rem,1.6rem + 5vw,5.6rem)}
+h1 span{color:var(--citron)}
+header p{font-size:clamp(1.05rem,1rem + .5vw,1.3rem);font-weight:600;max-width:40ch;margin:0}
+:focus-visible{outline:4px solid var(--citron);outline-offset:3px;border-radius:6px}
+
+.qui{width:min(100%,520px);background:var(--argile);color:var(--encre);border-radius:22px;padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:end;justify-content:center;box-shadow:0 8px 0 var(--email-deep)}
+.qui .champ{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:6px}
+label.titre{font-weight:800;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em}
+input[type=text]{font:600 1.05rem var(--body);color:var(--encre);background:#fff;border:3px solid var(--encre);border-radius:12px;padding:.6em .8em;width:100%}
+
+.meilleure{text-align:center;background:var(--citron);color:var(--encre);border-radius:20px;padding:14px 22px;font-weight:800;max-width:100%;box-shadow:0 6px 0 var(--encre);transform:rotate(-1deg)}
+.meilleure[hidden]{display:none}
+
+.creneaux{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));gap:clamp(12px,2.4vw,18px)}
+@media (min-width:640px){ .creneaux{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))} }
+.creneau{min-width:0;position:relative;background:var(--argile);color:var(--encre);border-radius:20px;padding:18px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:6px;border:3px solid transparent;cursor:pointer;text-align:center;font:inherit;transition:transform .2s cubic-bezier(.3,1.4,.5,1), background-color .25s;box-shadow:0 6px 0 var(--email-deep)}
+.creneau:hover:not([disabled]){transform:translateY(-3px) rotate(-1deg)}
+.creneau:active:not([disabled]){transform:scale(.97)}
+.creneau[aria-pressed="true"]{background:var(--menthe);border-color:var(--encre)}
+.creneau.top{box-shadow:0 0 0 4px var(--citron),0 6px 0 var(--email-deep)}
+.creneau .jour{font-family:var(--display);font-size:clamp(1.25rem,1rem + 1.2vw,1.7rem);line-height:1}
+.creneau .heure{font-weight:700;font-size:.92rem}
+.creneau .jauge{width:100%;height:8px;border-radius:99px;background:rgba(20,10,61,.12);overflow:hidden;margin-top:4px}
+.creneau .jauge span{display:block;height:100%;width:0;border-radius:inherit;background:var(--email);transition:width .5s cubic-bezier(.3,1.4,.5,1)}
+.creneau .compte{font-weight:800;font-variant-numeric:tabular-nums;font-size:.9rem}
+.creneau .noms{font-family:var(--main);font-size:1.1rem;line-height:1.15;min-height:1.2em;overflow-wrap:anywhere}
+.creneau .coche{position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;border:3px solid var(--encre);display:grid;place-items:center;font-weight:800;font-size:.9rem;background:#fff}
+.creneau[aria-pressed="true"] .coche{background:var(--encre);color:var(--argile)}
+.creneau .lucie{position:absolute;top:-11px;left:50%;transform:translateX(-50%) rotate(-3deg);background:var(--rose);color:var(--encre);font:800 .7rem var(--body);letter-spacing:.08em;text-transform:uppercase;padding:.3em .7em;border-radius:999px;white-space:nowrap;border:2px solid var(--encre)}
+.creneau[disabled]{cursor:not-allowed}
+.passe{opacity:.45}
+
+.statut{min-height:1.4em;text-align:center;font-weight:700;margin:0}
+.vide{text-align:center;font-family:var(--main);font-size:1.5rem;grid-column:1/-1;background:var(--voile);border-radius:20px;padding:24px;margin:0}
+.note{font-size:.9rem;text-align:center;max-width:56ch;margin:0;opacity:.9}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.piege{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+</style>
+</head>
+<body>
+
+<div class="cadre">
+  <header>
+    <p class="etiquette">Atelier peinture sur céramique</p>
+    <h1>Quand est ce qu'on <span>peint ?</span></h1>
+    <p>Lucie, coche toutes les dates qui te vont. Les copines cochent aussi, et on garde celle où tu es dispo avec le plus de monde.</p>
+  </header>
+
+  <div class="qui">
+    <div class="champ">
+      <label class="titre" for="prenom">Ton prénom</label>
+      <input type="text" id="prenom" maxlength="40" autocomplete="given-name" placeholder="Pour que les autres te voient">
+    </div>
+    <div class="piege" aria-hidden="true"><label for="site">Site</label><input type="text" id="site" name="site" tabindex="-1" autocomplete="off"></div>
+  </div>
+
+  <p class="meilleure" id="meilleure" hidden></p>
+
+  <div class="creneaux" id="creneaux" aria-live="polite">
+    <p class="vide">Les dates proposées arrivent, recharge dans un instant si rien ne s'affiche.</p>
+  </div>
+  <p class="statut" id="statut" role="status" aria-live="polite"></p>
+
+  <p class="note">Tes choix s'enregistrent dès que tu touches une date, et tu peux les changer quand tu veux en revenant ici.</p>
+</div>
+
+<script>
+// Si Firebase ne se charge pas, la page le dit au lieu de rester muette.
+(() => {
+  const dire = () => { document.querySelector("#statut").textContent = "Les dates ne se chargent pas pour l'instant. Vérifie ta connexion, puis recharge la page."; };
+  setTimeout(() => { if (!window.basePrete) dire(); }, 8000);
+})();
+</script>
+<script type="module">
+import { db, connexion, ecrire, doc, collection, onSnapshot, getDoc } from "../js/base.js";
+window.basePrete = true;
+const $ = s => document.querySelector(s);
+let monId=null, mesDates=new Set(), enregistrees=new Set(), creneaux=[], dispos=[], enCours=false, aRefaire=false;
+const jours = new Intl.DateTimeFormat("fr-FR",{weekday:"long", day:"numeric", month:"long"});
+const auj = new Date(); auj.setHours(0,0,0,0);
+const estLucie = d => (d.prenom||"").trim().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()==="lucie";
+
+function rendre(){
+  const zone=$("#creneaux"); zone.textContent="";
+  const liste=[...creneaux].sort((a,b)=>(a.date+a.moment).localeCompare(b.date+b.moment));
+  if(!liste.length){ const v=document.createElement("p"); v.className="vide"; v.textContent="Les dates arrivent très vite, reviens dans un petit moment."; zone.appendChild(v); $("#meilleure").hidden=true; return; }
+  const parCren={};
+  for(const d of dispos) for(const c of (d.id===monId ? mesDates : (d.dates||[]))) (parCren[c] ||= []).push(d);
+  if(monId && mesDates.size && !dispos.some(d=>d.id===monId)) for(const c of mesDates) (parCren[c] ||= []).push({prenom:$("#prenom").value.trim()});
+  // La date retenue doit convenir à Lucie : dès qu'elle a coché, on ne compte que ses dates.
+  const avecLucie=c=>(parCren[c.id]||[]).some(estLucie);
+  const lucieRepond=liste.some(avecLucie);
+  const futures=liste.filter(c=>new Date(c.date+"T23:59")>=auj);
+  const candidates=futures.filter(c=>!lucieRepond||avecLucie(c));
+  let max=0; for(const c of candidates){ const n=(parCren[c.id]||[]).length; if(n>max) max=n; }
+  const total=new Set(Object.values(parCren).flat().map(x=>x.id||x.prenom)).size||1;
+  for(const c of liste){
+    const qui=parCren[c.id]||[];
+    const b=document.createElement("button"); b.type="button"; b.className="creneau"; b.id="cr-"+c.id;
+    const passe = new Date(c.date+"T23:59") < auj;
+    if(passe){ b.classList.add("passe"); b.disabled=true; }
+    if(max>0 && candidates.includes(c) && qui.length===max) b.classList.add("top");
+    b.setAttribute("aria-pressed", mesDates.has(c.id) ? "true":"false");
+    if(!monId) b.disabled=true;
+    const d=new Date(c.date+"T12:00");
+    const j=document.createElement("span"); j.className="jour"; j.textContent=jours.format(d).replace(/^./,m=>m.toUpperCase());
+    const h=document.createElement("span"); h.className="heure"; h.textContent=c.moment||"";
+    const g=document.createElement("span"); g.className="jauge"; g.setAttribute("aria-hidden","true"); const gi=document.createElement("span"); gi.style.width=(qui.length/total*100)+"%"; g.appendChild(gi);
+    const n=document.createElement("span"); n.className="compte"; n.textContent= qui.length ? (qui.length===1?"1 personne dispo":qui.length+" personnes dispo") : "Personne pour l'instant";
+    const p=document.createElement("span"); p.className="noms"; p.textContent=qui.map(x=>x.prenom||"Quelqu'un").join(", ");
+    const k=document.createElement("span"); k.className="coche"; k.setAttribute("aria-hidden","true"); k.textContent= mesDates.has(c.id)?"✓":"";
+    b.append(k,j,h,g,n,p);
+    if(avecLucie(c)){ const l=document.createElement("span"); l.className="lucie"; l.textContent="Lucie est dispo"; b.appendChild(l); }
+    b.addEventListener("click",()=>basculer(c.id));
+    zone.appendChild(b);
+  }
+  const tops=candidates.filter(c=>max>0 && (parCren[c.id]||[]).length===max);
+  const m=$("#meilleure");
+  if(tops.length){ const t=tops[0]; m.hidden=false;
+    const quand=`${jours.format(new Date(t.date+"T12:00"))} ${(t.moment||"").toLowerCase()}`, gens=`${max} ${max>1?"personnes":"personne"}`, egal=tops.length>1?" (à égalité avec d'autres dates)":"";
+    m.textContent = lucieRepond
+      ? `Pour l'instant la meilleure date avec Lucie, ${quand}, avec ${gens}${egal}.`
+      : `Lucie n'a pas encore coché. La date qui plaît le plus pour l'instant, ${quand}, avec ${gens}${egal}.`;
+  } else m.hidden=true;
+}
+
+function erreur(e, defaut){
+  if(e&&e.code==="trop-vite") return "Trop de changements en peu de temps. Attends une minute, puis réessaie.";
+  if(e&&e.code==="permission-denied") return "Ce choix n'a pas été accepté. Vérifie ton prénom, puis réessaie.";
+  return defaut;
+}
+
+// Les coches rapprochées partent en un seul envoi.
+let tempo;
+function planifier(delai){ clearTimeout(tempo); tempo=setTimeout(enregistrer,delai); }
+async function enregistrer(){
+  if(enCours){ aRefaire=true; return; }
+  const prenom=$("#prenom").value.trim();
+  if(!prenom||!monId) return;
+  // Champ piège : un robot le remplit, une personne ne le voit pas.
+  if($("#site").value){ $("#statut").textContent="C'est noté."; return; }
+  const envoi=new Set(mesDates); enCours=true;
+  try{
+    await ecrire(monId, "dispos/"+monId, async () => tx => tx.set(doc(db,"dispos",monId), {prenom, dates:[...envoi]}));
+    enregistrees=envoi; $("#statut").textContent="C'est noté.";
+  }catch(e){
+    aRefaire=false; mesDates=new Set(enregistrees); rendre();
+    $("#statut").textContent=erreur(e,"Ton choix n'a pas pu être enregistré, réessaie.");
+  }finally{ enCours=false; if(aRefaire){ aRefaire=false; enregistrer(); } }
+}
+function basculer(id){
+  if(!monId) return;
+  if(!$("#prenom").value.trim()){ $("#statut").textContent="Ajoute ton prénom d'abord, pour que les autres sachent qui a coché."; $("#prenom").focus(); return; }
+  mesDates.has(id)?mesDates.delete(id):mesDates.add(id);
+  rendre(); planifier(600);
+}
+$("#prenom").addEventListener("input",()=>{ if(!mesDates.size&&!enregistrees.size) return; planifier(800); });
+
+// Les coches et les dates des autres arrivent toutes seules. En cas de coupure, la page garde ce qu'elle a déjà.
+onSnapshot(collection(db,"creneaux"), s=>{ creneaux=s.docs.map(d=>({id:d.id,...d.data()})); rendre(); }, ()=>{ $("#statut").textContent="La page ne se met plus à jour, recharge la."; });
+onSnapshot(collection(db,"dispos"), s=>{ dispos=s.docs.map(d=>({id:d.id,...d.data()})); rendre(); }, ()=>{});
+
+try{ monId=await connexion(); }
+catch(e){ $("#statut").textContent="La connexion a échoué. Recharge la page pour cocher tes dates."; }
+if(monId){
+  try{ const s=await getDoc(doc(db,"dispos",monId)); if(s.exists()){ const d=s.data(); mesDates=new Set(d.dates||[]); enregistrees=new Set(mesDates); if(d.prenom) $("#prenom").value=d.prenom; } }catch(e){}
+  rendre();
+}
+</script>
+</body>
+</html>
