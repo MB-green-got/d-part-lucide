@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Gochi+Hand&display=swap">
 <style>
 /* Concept → la grande carte qu'on fait passer au bureau, version atelier céramique.
-   Un formulaire en carton au centre, puis un mur de post it qui se remplit en direct. */
+   Un formulaire en carton au centre. Chacun ne voit que son propre post it, le mur complet est réservé au cadeau. */
 :root{
   --email:#1F3BFF; --email-deep:#1426B8;
   --rose:#FF5FA2; --citron:#FFD23F; --menthe:#4FE3B0; --mandarine:#FF7A2F;
@@ -68,22 +68,16 @@ textarea:focus-visible{outline:4px solid var(--email);outline-offset:4px}
 .photo .lien{align-self:center}
 .aide{font-size:.82rem;margin:0}
 
-.mur{width:100%;display:flex;flex-direction:column;align-items:center;gap:24px}
-.mur h2{font-size:clamp(2rem,1.4rem + 2.6vw,3.4rem);text-align:center}
-.mur .nb{font-variant-numeric:tabular-nums}
-.postits{width:100%;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr));align-items:start;gap:28px clamp(14px,3vw,24px)}
-@media (min-width:640px){ .postits{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))} }
-.postits .vide{grid-column:1/-1;justify-self:center}
-.postit{min-width:0;color:var(--encre);padding:20px clamp(14px,3vw,20px) 16px;min-height:170px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 0 rgba(20,10,61,.28);position:relative;animation:pose .5s cubic-bezier(.3,1.5,.5,1) both}
+.monmot{width:100%;display:flex;flex-direction:column;align-items:center;gap:28px}
+.monmot[hidden]{display:none}
+.monmot h2{font-size:clamp(2rem,1.4rem + 2.6vw,3.4rem);text-align:center}
+.postit{width:min(100%,300px);color:var(--encre);padding:20px clamp(14px,3vw,20px) 16px;min-height:170px;display:flex;flex-direction:column;gap:12px;box-shadow:0 10px 0 rgba(20,10,61,.28);position:relative;animation:pose .5s cubic-bezier(.3,1.5,.5,1) both}
 .postit::before{content:"";position:absolute;top:-12px;left:50%;width:84px;height:24px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.7)}
 .postit.moien{outline:4px solid var(--citron);outline-offset:6px}
 .postit p{margin:0;font-family:var(--main);font-size:clamp(1.1rem,1rem + .6vw,1.4rem);line-height:1.18;overflow-wrap:anywhere;white-space:pre-line}
 .postit .qui{margin-top:auto;font-weight:800;overflow-wrap:anywhere}
 .postit img{width:100%;aspect-ratio:4/3;object-fit:cover;border:6px solid #fff;box-shadow:0 3px 0 rgba(20,10,61,.2)}
-.postit .moi{position:absolute;top:10px;right:12px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.1em;background:var(--encre);color:var(--argile);padding:.2em .6em;border-radius:999px}
-.postit .retirer{align-self:flex-start;background:none;border:2px solid var(--encre);color:var(--encre);font:700 .78rem var(--body);border-radius:999px;padding:.25em .8em;cursor:pointer}
-.vide{max-width:32ch;text-align:center;font-family:var(--main);font-size:1.6rem;line-height:1.2;background:var(--voile);border:3px dashed var(--argile);border-radius:24px;padding:28px}
-.note{font-size:.9rem;text-align:center;max-width:52ch;opacity:.9;margin:0}
+.note{font-size:1rem;font-weight:600;text-align:center;max-width:40ch;margin:0}
 
 @keyframes pose{from{transform:translateY(-14px) rotate(0) scale(.9)}}
 @media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
@@ -134,12 +128,10 @@ textarea:focus-visible{outline:4px solid var(--email);outline-offset:4px}
     <button class="lien" type="button" id="effacer" hidden>Retirer mon post it</button>
   </form>
 
-  <section class="mur" aria-labelledby="titreMur">
-    <h2 id="titreMur">Le mur <span class="nb" id="nb"></span></h2>
-    <div class="postits" id="postits">
-      <p class="vide" id="vide">Le mur se remplit dès qu'un premier mot est collé. Lance toi !</p>
-    </div>
-    <p class="note">Chacun peut coller un seul post it et le modifier quand il veut en revenant sur cette page.</p>
+  <section class="monmot" id="monMot" aria-labelledby="titreMonMot" hidden>
+    <h2 id="titreMonMot">Ton post it</h2>
+    <div id="zonePostit"></div>
+    <p class="note">Lucie le découvrira sur son cadeau, avec les mots de toute l'équipe.</p>
   </section>
 </div>
 
@@ -147,17 +139,17 @@ textarea:focus-visible{outline:4px solid var(--email);outline-offset:4px}
 <script>
 // Si Firebase ne se charge pas, la page le dit au lieu de rester muette.
 (() => {
-  const dire = () => { document.querySelector("#statut").textContent = "Le mur ne répond pas pour l'instant. Vérifie ta connexion, puis recharge la page."; };
+  const dire = () => { document.querySelector("#statut").textContent = "La carte ne répond pas pour l'instant. Vérifie ta connexion, puis recharge la page."; };
   setTimeout(() => { if (!window.basePrete) dire(); }, 8000);
   for (const f of document.querySelectorAll("#formulaire")) f.addEventListener("submit", e => { if (!window.basePrete) { e.preventDefault(); dire(); } });
 })();
 </script>
 <script type="module">
-import { db, connexion, ecrire, doc, collection, onSnapshot, getDoc, serverTimestamp } from "../js/base.js";
+import { db, connexion, ecrire, doc, onSnapshot, serverTimestamp } from "../js/base.js";
 window.basePrete = true;
 const $ = s => document.querySelector(s);
 const fonds = {citron:"var(--citron)", rose:"var(--rose)", menthe:"var(--menthe)", mandarine:"var(--mandarine)", argile:"#fff"};
-let monId = null, dejaPoste = false, lectureSeule = false, derniers = [], photo = null;
+let monId = null, dejaPoste = false, lectureSeule = false, photo = null;
 const JPEG = "data:image/jpeg;base64,";
 
 function compter(){ const n = $("#message").value.length; $("#compte").textContent = n + " sur 280"; $("#compte").classList.toggle("presque", n >= 250); }
@@ -211,33 +203,24 @@ $("#sansPhoto").addEventListener("click", () => { montrerPhoto(null); $("#aidePh
 
 function angle(id){ let h=0; for (const c of id) h=(h*31+c.charCodeAt(0))|0; return (Math.abs(h)%7)-3; }
 
-function rendre(docs){
-  derniers = docs;
-  const zone = $("#postits");
+// Affiche uniquement le post it de la personne. Ceux des autres ne sont jamais chargés ici.
+function rendre(m){
+  const zone = $("#zonePostit");
   zone.textContent = "";
-  const liste = docs.map(d => ({id:d.id, ...d.data({serverTimestamps:"estimate"})})).filter(m => m.texte)
-    .sort((a,b) => (a.date ? a.date.toMillis() : 0) - (b.date ? b.date.toMillis() : 0));
-  $("#nb").textContent = liste.length ? "· " + liste.length : "";
-  if (!liste.length) {
-    const v = document.createElement("p"); v.className="vide";
-    v.textContent = "Le mur se remplit dès qu'un premier mot est collé. Lance toi !";
-    zone.appendChild(v); return;
+  $("#monMot").hidden = !m;
+  if (!m) return;
+  const el = document.createElement("article");
+  el.className = "postit"; el.id = "monPostit";
+  el.style.background = fonds[m.couleur] || fonds.citron;
+  el.style.transform = `rotate(${angle(monId)}deg)`;
+  if (typeof m.photo === "string" && m.photo.startsWith(JPEG)) {
+    const im = document.createElement("img"); im.src = m.photo; im.alt = "Ta photo";
+    el.appendChild(im);
   }
-  for (const m of liste) {
-    const el = document.createElement("article");
-    el.className = "postit";
-    el.style.background = fonds[m.couleur] || fonds.citron;
-    el.style.transform = `rotate(${angle(m.id)}deg)`;
-    if (typeof m.photo === "string" && m.photo.startsWith(JPEG)) {
-      const im = document.createElement("img"); im.src = m.photo; im.alt = "Photo de " + (m.prenom || "l'équipe"); im.loading = "lazy";
-      el.appendChild(im);
-    }
-    const p = document.createElement("p"); p.textContent = m.texte;
-    const q = document.createElement("span"); q.className="qui"; q.textContent = m.prenom || "Quelqu'un de l'équipe";
-    el.append(p, q);
-    if (m.id === monId) { const t=document.createElement("span"); t.className="moi"; t.textContent="Toi"; el.appendChild(t); el.id="monPostit"; }
-    zone.appendChild(el);
-  }
+  const p = document.createElement("p"); p.textContent = m.texte;
+  const q = document.createElement("span"); q.className="qui"; q.textContent = m.prenom;
+  el.append(p, q);
+  zone.appendChild(el);
 }
 
 function modeLecture(msg){
@@ -281,7 +264,7 @@ $("#formulaire").addEventListener("submit", async e => {
     $("#statut").textContent = "C'est collé ! Tu peux le modifier quand tu veux.";
     const premier = !dejaPoste;
     colle(); fete();
-    // On montre le post it sur le mur, le temps que le mur se mette à jour.
+    // On montre le post it collé, le temps que l'affichage se mette à jour.
     setTimeout(() => { const el = $("#monPostit"); if (!el) return; el.classList.add("moien");
       if (premier) el.scrollIntoView({ behavior: "smooth", block: "center" }); setTimeout(() => el.classList.remove("moien"), 2400); }, 400);
   } catch(err) {
@@ -300,26 +283,23 @@ $("#effacer").addEventListener("click", async () => {
   } catch(e) { $("#statut").textContent = erreur(e, "Impossible de le retirer pour l'instant, réessaie."); }
 });
 
-// Le mur se met à jour tout seul dès qu'un mot change. En cas de coupure, il garde ce qu'il a déjà.
-onSnapshot(collection(db, "mots"), snap => rendre(snap.docs), () => {
-  $("#statut").textContent = "Le mur ne se met plus à jour, recharge la page.";
-});
-
 try { monId = await connexion(); }
 catch(e) { modeLecture("La connexion a échoué. Recharge la page pour coller ton post it."); }
 if (monId) {
-  rendre(derniers);
-  try {
-    const s = await getDoc(doc(db, "mots", monId));
-    if (s.exists()) {
-      const d = s.data();
+  // On écoute seulement son propre document. Au premier passage, il remplit aussi le formulaire.
+  let premiere = true;
+  onSnapshot(doc(db, "mots", monId), s => {
+    const d = s.exists() ? s.data({serverTimestamps:"estimate"}) : null;
+    rendre(d && d.texte ? d : null);
+    if (premiere && d) {
       $("#prenom").value = d.prenom || $("#prenom").value; $("#message").value = d.texte || "";
       compter();
       const r = document.getElementById("c-"+d.couleur); if (r) { r.checked = true; teindre(); }
       if (typeof d.photo === "string" && d.photo.startsWith(JPEG)) montrerPhoto(d.photo);
       colle();
     }
-  } catch(e){}
+    premiere = false;
+  }, () => { $("#statut").textContent = "Ton post it ne se met plus à jour, recharge la page."; });
 }
 </script>
 </body>
