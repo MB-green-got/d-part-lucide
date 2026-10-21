@@ -612,7 +612,8 @@ function montrerMot(i){
     const place=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-gap-(f?f.offsetHeight+gap:0);
     let taille=parseFloat(getComputedStyle(t).fontSize);
     while(t.offsetHeight+q.offsetHeight>place && taille>11){ taille-=1; t.style.fontSize=taille+"px"; } }
-  $("#compteur").textContent=L.length>1?`${mot+1} sur ${L.length}`:"";
+  // La photo de Lucie ouvre le mur sans compter parmi les mots.
+  $("#compteur").textContent=mot>0?`${mot} sur ${L.length-1}`:"";
   $("#murPrec").hidden=$("#murSuiv").hidden=L.length<2;
   $("#voirTout").hidden=L.length<3;
   $("#sousMur").textContent= mots.length ? (mots.length===1?"Un mot de l'équipe, rien que pour toi":`${mots.length} mots de l'équipe, rien que pour toi`) : "";
