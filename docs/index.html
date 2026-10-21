@@ -317,7 +317,6 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
 
   <section class="ecran" data-ecran="mur" aria-labelledby="tMur" tabindex="-1">
     <h2 class="titre-grand" id="tMur">Le mur de l'équipe</h2>
-    <p class="sous" id="sousMur"></p>
     <div class="mur" data-noswipe>
       <button class="rond" type="button" id="murPrec" aria-label="Mot précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
       <div class="carte-mur" id="carteMur" aria-live="polite"></div>
@@ -616,7 +615,6 @@ function montrerMot(i){
   $("#compteur").textContent=mot>0?`${mot} sur ${L.length-1}`:"";
   $("#murPrec").hidden=$("#murSuiv").hidden=L.length<2;
   $("#voirTout").hidden=L.length<3;
-  $("#sousMur").textContent= mots.length ? (mots.length===1?"Un mot de l'équipe, rien que pour toi":`${mots.length} mots de l'équipe, rien que pour toi`) : "";
 }
 // Les mots de la carte arrivent en direct à partir de l'écran des dates, et l'écoute reste ouverte jusqu'à la fin.
 // Si la base ne répond pas, le mur garde ce qu'il affiche déjà.
