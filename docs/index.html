@@ -212,11 +212,23 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
 .grand h2{font-size:clamp(1.5rem,6vw,2.4rem)}
 .grand .defile{flex:1;overflow:auto;overscroll-behavior:contain;padding:32px max(16px,env(safe-area-inset-right,0px)) calc(40px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .grille{max-width:1080px;margin:0 auto;columns:240px;column-gap:24px}
-.grille > *{break-inside:avoid;margin:0 0 32px;position:relative;display:flex}
+.grille > *{break-inside:avoid;margin:0 0 32px;padding-top:14px;position:relative;display:flex}
 .grille > * > *{flex:1}
 .grille .postit{min-height:170px;justify-content:space-between;position:relative}
 .grille .postit p{font-size:1.35rem}
 .grille .polaroid img{aspect-ratio:1;flex:none}
+/* La photo d'un mot est scotchée sur son post it. */
+.postit.avec-photo::before{display:none}
+.postit .polaroid.colle{position:relative;flex:none;align-self:center;width:55%;padding:6px 6px 0;box-shadow:0 4px 0 rgba(20,10,61,.15);transform:rotate(-3deg)}
+.postit .polaroid.colle::before{content:"";position:absolute;top:-10px;left:50%;width:70px;height:22px;transform:translateX(-50%) rotate(3deg);background:rgba(255,244,236,.8);box-shadow:0 1px 3px rgba(20,10,61,.1)}
+.postit .polaroid.colle img{aspect-ratio:4/3;flex:none}
+.postit .polaroid.colle figcaption{min-height:6px;padding:0}
+.grille .postit .polaroid.colle{width:80%;margin-top:4px}
+/* La photo de Lucie en tête du mur. */
+.une{max-width:1080px;margin:0 auto 40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:24px 40px}
+.une .polaroid{width:min(100%,320px);transform:rotate(-3deg)}
+.une .polaroid img{aspect-ratio:1;flex:none}
+.une p{margin:0;font-family:var(--main);font-size:clamp(1.6rem,5vw,2.4rem);line-height:1.15;max-width:16ch;text-wrap:balance}
 
 /* Fin */
 .signature{font-family:var(--display);font-size:var(--t-geant);color:var(--citron);line-height:.95;margin:0}
@@ -353,7 +365,7 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
     <h2 id="tTout">Tout le mur</h2>
     <button class="rond" type="button" id="fermerTout" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </header>
-  <div class="defile"><div class="grille" id="grille"></div></div>
+  <div class="defile"><div class="une" id="une"></div><div class="grille" id="grille"></div></div>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.js"></script>
@@ -379,12 +391,12 @@ const CADEAU = {
     { indice: "Tu repartiras avec un objet fait de tes mains, plus ou moins réussi.", souvenir: "Celle qui a fait partir les tickets d'or de la levée." },
     { indice: "On boira un verre pendant que ça sèche.", souvenir: "Une vraie baroudeuse, il paraît." }
   ],
-  // La photo de Lucie s'affiche en premier, puis les post it de l'équipe en alternance avec les photos suivantes.
-  // Les photos jointes à un mot depuis la carte de l'équipe s'affichent juste après ce mot.
+  // La photo de Lucie s'affiche en premier avec sa phrase, puis les post it de l'équipe en alternance avec les photos suivantes.
+  // Les photos jointes à un mot depuis la carte de l'équipe sont scotchées sur le post it de ce mot.
   // Pour ajouter une photo, dépose la dans assets/photos et ajoute une ligne, par exemple
   // { type: "photo", src: "assets/photos/pot-de-depart.jpg", legende: "" },
   mur: [
-    { type: "photo", src: "assets/lucie.jpg", legende: "" }
+    { type: "photo", src: "assets/lucie.jpg", legende: "", phrase: "On avait quelque chose à te dire avant que tu vogues vers d'autres horizons" }
   ],
   fin: {
     titre: "Merci pour tout, Lucie",
@@ -595,18 +607,20 @@ function compterReponses(){
 
 /* Mur, un mot à la fois */
 let mot=0, mots=[], ecoute=null, signature=""; const fondsPost={citron:"#FFD23F",menthe:"#4FE3B0",rose:"#FF5FA2",mandarine:"#FF7A2F",argile:"#FFFFFF"};
-// La photo de Lucie d'abord, puis un post it (suivi de sa photo s'il en a une), une photo, un post it, et ainsi de suite.
+// La photo de Lucie d'abord, puis un post it, une photo, un post it, et ainsi de suite.
 function liste(){
   const P=CADEAU.mur, L=P.slice(0,1);
-  for(let k=0;k<Math.max(mots.length,P.length-1);k++){ if(mots[k]) L.push(...mots[k]); if(P[k+1]) L.push(P[k+1]); }
+  for(let k=0;k<Math.max(mots.length,P.length-1);k++){ if(mots[k]) L.push(mots[k]); if(P[k+1]) L.push(P[k+1]); }
   return L;
 }
+function polaroid(src,alt,legende){ const f=document.createElement("figure"); f.className="polaroid";
+  const im=document.createElement("img"); im.src=src; im.alt=alt; im.decoding="async"; const c=document.createElement("figcaption"); c.textContent=legende;
+  f.append(im,c); return f; }
 function element(m,k){
   const r=((k*37)%7)-3;
-  if(m.type==="photo"){ const f=document.createElement("figure"); f.className="polaroid"; f.style.transform=`rotate(${r}deg)`;
-    const im=document.createElement("img"); im.src=m.src; im.alt=m.alt||m.legende||"Photo de l'équipe"; im.decoding="async"; const c=document.createElement("figcaption"); c.textContent=m.legende||"";
-    f.append(im,c); return f; }
+  if(m.type==="photo"){ const f=polaroid(m.src,m.alt||m.legende||"Photo de l'équipe",m.legende||m.phrase||""); f.style.transform=`rotate(${r}deg)`; return f; }
   const p=document.createElement("div"); p.className="postit"; p.style.background=fondsPost[m.couleur]||Object.values(fondsPost)[k%5]; p.style.transform=`rotate(${r}deg)`;
+  if(m.photo){ const f=polaroid(m.photo,"Photo de "+(m.qui||"l'équipe"),""); f.classList.add("colle"); p.classList.add("avec-photo"); p.appendChild(f); }
   const t=document.createElement("p"); t.textContent=m.texte; const q=document.createElement("span"); q.className="qui"; q.textContent=m.qui||"L'équipe"; p.append(t,q); return p;
 }
 function montrerMot(i){
@@ -614,7 +628,8 @@ function montrerMot(i){
   const el=element(L[mot],mot); z.appendChild(el); z.classList.toggle("seul",L.length<2);
   if(el.classList.contains("postit")){
     // Un long mot rétrécit jusqu'à tenir dans le post it.
-    const t=el.querySelector("p"), q=el.querySelector(".qui"), cs=getComputedStyle(el), place=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-parseFloat(cs.rowGap||0);
+    const t=el.querySelector("p"), q=el.querySelector(".qui"), f=el.querySelector(".colle"), cs=getComputedStyle(el), gap=parseFloat(cs.rowGap||0);
+    const place=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-gap-(f?f.offsetHeight+gap:0);
     let taille=parseFloat(getComputedStyle(t).fontSize);
     while(t.offsetHeight+q.offsetHeight>place && taille>11){ taille-=1; t.style.fontSize=taille+"px"; } }
   $("#compteur").textContent=L.length>1?`${mot+1} sur ${L.length}`:"";
@@ -633,8 +648,7 @@ function ecouterMur(){
         .sort((a,b)=>(a.date?a.date.toMillis():0)-(b.date?b.date.toMillis():0));
       const photo=m=>typeof m.photo==="string"&&m.photo.startsWith("data:image/jpeg;base64,")?m.photo:"";
       const sig=JSON.stringify(liste_.map(m=>[m.id,m.prenom,m.texte,m.couleur,photo(m).length,photo(m).slice(-40)])); if(sig===signature) return; signature=sig;
-      mots=liste_.map(m=>{ const p={type:"mot",id:m.id,texte:m.texte,qui:m.prenom,couleur:m.couleur};
-        return photo(m) ? [p,{type:"photo",id:m.id+"/photo",src:photo(m),legende:m.prenom||"",alt:"Photo de "+(m.prenom||"l'équipe")}] : [p]; });
+      mots=liste_.map(m=>({type:"mot",id:m.id,texte:m.texte,qui:m.prenom,couleur:m.couleur,photo:photo(m)}));
       const k=liste().findIndex(x=>x===avant||(avant&&avant.id&&x.id===avant.id));
       const n=ecrans[ici].dataset.ecran;
       if(n==="mur") montrerMot(k<0?mot:k);
@@ -651,14 +665,20 @@ $("#carteMur").addEventListener("touchstart",e=>{ mx=e.touches[0].clientX; },{pa
 $("#carteMur").addEventListener("touchend",e=>{ if(mx===null) return; const dx=e.changedTouches[0].clientX-mx; mx=null;
   if(Math.abs(dx)>40 && liste().length>1){ montrerMot(mot+(dx<0?1:-1)); bip(dx<0?560:480); } },{passive:true});
 
-function remplirGrille(){ const g=$("#grille"); g.textContent=""; liste().forEach((m,k)=>{ const w=document.createElement("div"); const el=element(m,k); if(m.type==="photo") el.querySelector("img").loading="lazy"; w.appendChild(el); g.appendChild(w); }); }
+// La photo de Lucie et sa phrase en tête, puis tout le reste du mur en colonnes.
+function remplirGrille(){
+  const L=liste(), u=$("#une"), g=$("#grille"); u.textContent=""; g.textContent="";
+  const tete=L[0]===CADEAU.mur[0] ? L.shift() : null;
+  if(tete){ u.appendChild(polaroid(tete.src,tete.alt||"Lucie","")); if(tete.phrase){ const p=document.createElement("p"); p.textContent=tete.phrase; u.appendChild(p); } }
+  L.forEach((m,k)=>{ const w=document.createElement("div"); const el=element(m,k+1); el.querySelectorAll("img").forEach(i=>i.loading="lazy"); w.appendChild(el); g.appendChild(w); });
+}
 $("#voirTout").addEventListener("click",()=>{ remplirGrille(); $("#toutMur").showModal(); bip(660); });
 $("#fermerTout").addEventListener("click",()=>$("#toutMur").close());
 
 /* Fin, signée par celles et ceux qui ont écrit */
 function ecrireNoms(){
   const vus=new Set(), tous=[];
-  for(const n of [...mots.map(g=>g[0].qui), ...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(p.toLowerCase())){ vus.add(p.toLowerCase()); tous.push(p); } }
+  for(const n of [...mots.map(m=>m.qui), ...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(p.toLowerCase())){ vus.add(p.toLowerCase()); tous.push(p); } }
   const z=$("#noms"); z.textContent="";
   if(tous.length){
     const parts=new Intl.ListFormat("fr",{type:"conjunction"}).formatToParts([...tous,"toute l'équipe"]);
