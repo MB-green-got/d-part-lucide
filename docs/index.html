@@ -160,6 +160,7 @@ body[data-ecran="bon"] :focus-visible,body[data-ecran="mur"] :focus-visible{outl
 .bon::after{content:"";position:absolute;top:-14px;left:50%;width:110px;height:30px;transform:translateX(-50%) rotate(-3deg);background:rgba(255,244,236,.8)}
 .bon h3{font-size:clamp(1.5rem,min(7vw,4dvh),2.4rem)}
 .bon p{margin:0;font-weight:700}
+.souvenir{margin:0;font-weight:800;font-size:1.05em;max-width:30ch}
 .grattage{position:relative;width:100%;min-height:clamp(90px,15dvh,140px);border-radius:18px;background:var(--argile);display:grid;place-items:center;padding:12px;overflow:hidden}
 .bon .montant{font-family:var(--display);font-size:clamp(2rem,min(11vw,7dvh),5rem);line-height:.9;font-variant-numeric:tabular-nums;color:var(--email)}
 #grattoir{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none;transition:opacity .6s ease}
@@ -176,7 +177,7 @@ body[data-ecran="bon"] :focus-visible,body[data-ecran="mur"] :focus-visible{outl
 .pile span{position:absolute;inset:0;box-shadow:0 10px 0 rgba(20,10,61,.15);transition:transform .4s var(--ressort)}
 .pile span:nth-child(1){background:var(--menthe);transform:rotate(9deg) translate(12px,6px)}
 .pile span:nth-child(2){background:var(--citron);transform:rotate(-7deg) translate(-10px,4px)}
-.pile span:nth-child(3){background:var(--rose);transform:rotate(2deg);display:grid;place-items:center;font-family:var(--main);font-size:clamp(1.4rem,min(7vw,4dvh),2.2rem);color:var(--encre)}
+.pile span:nth-child(3){background:var(--rose);transform:rotate(2deg);display:grid;place-items:center;font-family:var(--main);font-size:clamp(1.4rem,min(7vw,4dvh),2.2rem);color:var(--encre);text-align:center;padding:12%;line-height:1.1}
 .pile span:nth-child(3)::before{content:"";position:absolute;top:-12px;left:50%;width:80px;height:24px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.8)}
 .actif .pile{animation:flotte 3.2s ease-in-out infinite}
 .pile:hover span:nth-child(1){transform:rotate(14deg) translate(22px,4px)}
@@ -316,13 +317,15 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
       <p id="bonTexte"></p>
     </article>
     <button class="lien" type="button" id="revelerBon">Gratte avec ton doigt, ou touche ici pour tout révéler</button>
+    <p class="souvenir" id="bonSouvenir" hidden>Mais on voulait aussi te laisser un souvenir de nous</p>
+    <button class="bouton pret" type="button" id="bonSuite" hidden>Et ce n'est pas fini…</button>
   </section>
 
   <section class="ecran" data-ecran="mur" aria-labelledby="tMur" tabindex="-1">
     <p class="etiquette">Le mur de l'équipe</p>
     <h2 class="titre-grand" id="tMur">On avait quelque chose à te dire avant que tu vogues vers d'autres horizons</h2>
-    <button class="pile" type="button" id="pileMur" tabindex="-1" aria-hidden="true"><span></span><span></span><span>Pour toi</span></button>
-    <button class="bouton pret" type="button" id="ouvrirMur">Ouvrir le mur</button>
+    <button class="pile" type="button" id="pileMur" tabindex="-1" aria-hidden="true"><span></span><span></span><span>Ouvrir ton mur</span></button>
+    <button class="bouton pret" type="button" id="ouvrirMur">Clique ici</button>
   </section>
 
   <section class="ecran" data-ecran="fin" aria-labelledby="tFin" tabindex="-1">
@@ -580,7 +583,7 @@ function peindreGrattoir(){
   gx.font=`800 ${Math.min(13,r.width/26)}px "Bricolage Grotesque", sans-serif`; gx.fillText("AVEC TON DOIGT",r.width/2,r.height/2+20);
 }
 function revelerBon(){
-  if(bonOk) return; bonOk=true; grattoir.classList.add("parti"); $("#revelerBon").hidden=true;
+  if(bonOk) return; bonOk=true; grattoir.classList.add("parti"); $("#revelerBon").hidden=true; $("#bonSouvenir").hidden=$("#bonSuite").hidden=false;
   fete(true); melodie([659,784,988]); if(ecrans[ici].dataset.ecran==="bon") appel();
 }
 function trait(e){
@@ -599,6 +602,7 @@ grattoir.addEventListener("pointerdown",e=>{ if(bonOk) return; grattoir.setPoint
 grattoir.addEventListener("pointermove",e=>{ if(!bonOk && grattoir.hasPointerCapture(e.pointerId)) trait(e); });
 grattoir.addEventListener("pointerup",()=>{ dernier=null; });
 $("#revelerBon").addEventListener("click",revelerBon);
+$("#bonSuite").addEventListener("click",()=>{ aller(ici+1); bip(500); });
 if(document.fonts) document.fonts.ready.then(peindreGrattoir);
 addEventListener("resize",peindreGrattoir);
 
