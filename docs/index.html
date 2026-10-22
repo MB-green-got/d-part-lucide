@@ -148,9 +148,6 @@ body[data-ecran="bon"] :focus-visible,body[data-ecran="mur"] :focus-visible{outl
 .ticket h3{font-size:clamp(1.6rem,min(8vw,4.4dvh),3rem)}
 .ticket .verso .etiquette{color:var(--email)}
 .ticket p{margin:0}
-.ticket .infos{width:100%;border-top:2px dashed var(--encre);padding-top:12px;margin:0;display:flex;justify-content:center;gap:12px 28px;flex-wrap:wrap}
-.ticket dt{font-weight:800;text-transform:uppercase;letter-spacing:.1em;font-size:.7rem;color:var(--email)}
-.ticket dd{margin:2px 0 0;font-weight:700}
 .ticket .numero{font:800 .66rem var(--body);letter-spacing:.2em;opacity:.55}
 .gros{font-family:var(--display);font-size:clamp(2rem,min(10vw,6dvh),3.6rem);line-height:1}
 .aide{font-size:.9em;font-weight:600;opacity:.85;margin:0;min-height:1.4em}
@@ -294,11 +291,9 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
           <span class="doigt" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#140A3D" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg></span>
         </div>
         <div class="face verso" aria-live="polite">
-          <span class="etiquette">Ticket d'atelier · Valable pour toute la bande</span>
           <h3 id="atelierTitre"></h3>
           <p id="atelierTexte"></p>
-          <dl class="infos" id="atelierInfos"></dl>
-          <span class="numero" aria-hidden="true">N° 0001 · LUCIE + LA BANDE</span>
+          <span class="numero" aria-hidden="true">N° 0001 · LUCIE + TOUTE LA BANDE</span>
         </div>
       </div>
     </div>
@@ -376,10 +371,8 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
    ========================================================= */
 const CADEAU = {
   atelier: {
-    titre: "Atelier peinture sur céramique",
-    texte: "On le fait toutes ensemble, à la date que tu choisis. On peint chacune notre pièce, on boit un verre pendant que ça sèche, et on repart avec un souvenir fait main.",
-    lieu: "Un café céramique à Paris",
-    date: "C'est toi qui choisis"
+    titre: "Un bon pour un atelier DIY",
+    texte: "Atelier DIY à faire ensemble, à la date que tu choisiras."
   },
   lienDate: new URL("date/?prenom=Lucie", location.href).href,   // construite à partir de l'adresse du site, avec le prénom de Lucie déjà rempli
   bon: {
@@ -466,7 +459,6 @@ const fete=(fort=false)=>{ if(reduit||typeof confetti!=="function") return; cons
 /* Contenu */
 const A=CADEAU.atelier;
 $("#atelierTitre").textContent=A.titre; $("#atelierTexte").textContent=A.texte;
-for(const [t,v] of [["Où",A.lieu],["Quand",A.date]]){ const d=document.createElement("div"), dt=document.createElement("dt"), dd=document.createElement("dd"); dt.textContent=t; dd.textContent=v; d.append(dt,dd); $("#atelierInfos").appendChild(d); }
 $("#montant").textContent=CADEAU.bon.montant||"Carte blanche"; $("#bonTexte").textContent=CADEAU.bon.texte;
 $("#tFin").textContent=CADEAU.fin.titre;
 const lien=CADEAU.lienDate && !CADEAU.lienDate.startsWith("__") ? CADEAU.lienDate : "";
@@ -798,19 +790,12 @@ function couverture(x,lucie){
 }
 
 /* Page 2, les cadeaux : le ticket retourné et le bon cadeau */
-function ticket(quand){
+function ticket(){
   const W=900, P=50, I=W-2*P, c=document.createElement("canvas"), x=c.getContext("2d"), blocs=[];
   // On mesure chaque bloc, puis on dessine sur un ticket juste assez haut.
-  x.font=police(800,24,FAM.corps); const et=couperEsp(x,"TICKET D'ATELIER · VALABLE POUR TOUTE LA BANDE",I,2.9); blocs.push([et.length*34,y=>{ x.fillStyle=EMAIL; x.font=police(800,24,FAM.corps); x.textBaseline="middle"; et.forEach((t,k)=>espacer(x,t,W/2,y+17+34*k,2.9)); }]);
   x.font=police(400,80,FAM.titre); const ti=couper(x,A.titre,I); blocs.push([ti.length*76,y=>{ x.fillStyle=ENCRE; x.font=police(400,80,FAM.titre); lignes(x,ti,W/2,y,76); }]);
   x.font=police(400,30,FAM.corps); const te=couper(x,A.texte,I); blocs.push([te.length*43,y=>{ x.fillStyle=ENCRE; x.font=police(400,30,FAM.corps); lignes(x,te,W/2,y,43); }]);
-  const cols=[["OÙ",A.lieu],["QUAND",quand||A.date]], cw=(I-60)/2;
-  x.font=police(700,30,FAM.corps); const dd=cols.map(([,v])=>couper(x,v,cw)), hInfos=24+26+8+Math.max(...dd.map(l=>l.length))*40;
-  blocs.push([hInfos,y=>{ x.strokeStyle=ENCRE; x.lineWidth=3; x.setLineDash([12,9]); x.beginPath(); x.moveTo(P,y); x.lineTo(W-P,y); x.stroke(); x.setLineDash([]);
-    x.font=police(700,30,FAM.corps); const larg=dd.map(l=>Math.max(...l.map(t=>x.measureText(t).width),90)); const tot=larg[0]+larg[1]+60; let gx=(W-tot)/2;
-    cols.forEach(([t],k)=>{ const cx=gx+larg[k]/2; x.fillStyle=EMAIL; x.font=police(800,18,FAM.corps); x.textBaseline="middle"; espacer(x,t,cx,y+24+13,1.8);
-      x.fillStyle=ENCRE; x.font=police(700,30,FAM.corps); lignes(x,dd[k],cx,y+24+26+8,40); gx+=larg[k]+60; }); }]);
-  blocs.push([22,y=>{ x.globalAlpha=.55; x.fillStyle=ENCRE; x.font=police(800,17,FAM.corps); x.textBaseline="middle"; espacer(x,"N° 0001 · LUCIE + LA BANDE",W/2,y+11,3.4); x.globalAlpha=1; }]);
+  blocs.push([22,y=>{ x.globalAlpha=.55; x.fillStyle=ENCRE; x.font=police(800,17,FAM.corps); x.textBaseline="middle"; espacer(x,"N° 0001 · LUCIE + TOUTE LA BANDE",W/2,y+11,3.4); x.globalAlpha=1; }]);
   const G=26, H=Math.ceil(2*P+blocs.reduce((s,b)=>s+b[0],0)+G*(blocs.length-1));
   c.width=W; c.height=H;
   x.fillStyle=ARGILE; x.beginPath(); x.roundRect(0,0,W,H,40); x.fill();
@@ -838,8 +823,8 @@ function bonCadeau(){
 const boite=(w,h,a)=>{ const r=Math.abs(a*Math.PI/180); return [w*Math.cos(r)+h*Math.sin(r), w*Math.sin(r)+h*Math.cos(r)]; };
 function poser(x,c,l,t,a,ombre){ const [bw,bh]=boite(c.width,c.height,a);
   x.save(); x.translate(l+bw/2,t+bh/2); x.rotate(a*Math.PI/180); x.shadowColor=ombre; x.shadowOffsetY=16; x.drawImage(c,-c.width/2,-c.height/2); x.restore(); return [bw,bh]; }
-function cadeaux(x,quand){
-  const t=ticket(quand), b=bonCadeau(), [tw,th]=boite(t.width,t.height,-2), [bw,bh]=boite(b.width,b.height,2);
+function cadeaux(x){
+  const t=ticket(), b=bonCadeau(), [tw,th]=boite(t.width,t.height,-2), [bw,bh]=boite(b.width,b.height,2);
   const hEt=34, ecart=26, entre=110, total=hEt+ecart+th+entre+hEt+ecart+bh+44, y0=Math.max(MARGE,(HP-total)/2);
   const tl=MARGE+20, bl=LP-MARGE-20-bw, yT=y0+hEt+ecart, yB=yT+th+entre+hEt+ecart;
   fond(x,EMAIL,[[tl,y0,tw,th+hEt+ecart+20],[bl,yB-hEt-ecart-30,bw,bh+hEt+ecart+50]],2);
@@ -926,24 +911,9 @@ function dos(x,noms){
   if(hF){ y+=40; x.fillStyle=ARGILE; x.font=police(600,46,FAM.corps); lignes(x,lf,cx,y,64); }
 }
 
-// Si Lucie a coché des dates, on garde la sienne où le plus de monde est dispo, comme le sondage.
-async function dateDeLucie(b){
-  const [sc,sd]=await Promise.all([b.getDocs(b.collection(b.db,"creneaux")),b.getDocs(b.collection(b.db,"dispos"))]);
-  const creneaux=new Map(sc.docs.map(d=>[d.id,d.data()])), dispos=sd.docs.map(d=>d.data());
-  const estLucie=d=>(d.prenom||"").trim().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()==="lucie";
-  const siennes=[...new Set(dispos.filter(estLucie).flatMap(d=>d.dates||[]))].filter(id=>creneaux.has(id)).map(id=>({id,...creneaux.get(id)}));
-  if(!siennes.length) return "";
-  const auj=new Date(); auj.setHours(0,0,0,0);
-  const futures=siennes.filter(c=>new Date(c.date+"T23:59")>=auj), choix=futures.length?futures:siennes;
-  const n=c=>dispos.filter(d=>(d.dates||[]).includes(c.id)).length;
-  choix.sort((a,b)=>n(b)-n(a)||(a.date+a.moment).localeCompare(b.date+b.moment));
-  const t=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}).format(new Date(choix[0].date+"T12:00"));
-  return t[0].toUpperCase()+t.slice(1)+(choix[0].moment?", "+choix[0].moment.toLowerCase():"");
-}
-
 async function fabriquerCarte(){
   const [Pdf,b]=await Promise.all([chargerPdf(),chargerBase()]);
-  const [s,quand]=await Promise.all([b.getDocs(b.collection(b.db,"mots")), dateDeLucie(b).catch(()=>"")]);
+  const s=await b.getDocs(b.collection(b.db,"mots"));
   const brut=s.docs.map(d=>d.data({serverTimestamps:"estimate"})).filter(m=>m.texte)
     .sort((a,c)=>(a.date?a.date.toMillis():0)-(c.date?c.date.toMillis():0));
   await polices();
@@ -952,7 +922,7 @@ async function fabriquerCarte(){
   const liste=brut.map((m,k)=>({texte:m.texte,qui:m.prenom||"L'équipe",couleur:m.couleur,photo:photos[k]}));
   const noms=prenoms(liste.map(m=>m.qui));
   const c=document.createElement("canvas"); c.width=LP; c.height=HP; const x=c.getContext("2d");
-  const pages=[x=>couverture(x,lucie), x=>cadeaux(x,quand), ...pagesMots(x,liste,lucie), x=>dos(x,noms)];
+  const pages=[x=>couverture(x,lucie), x=>cadeaux(x), ...pagesMots(x,liste,lucie), x=>dos(x,noms)];
   const pdf=new Pdf({orientation:"portrait",unit:"mm",format:"a4",compress:true});
   for(const [k,dessiner] of pages.entries()){
     await new Promise(r=>setTimeout(r));     // laisse respirer l'écran entre deux pages
