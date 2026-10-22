@@ -231,6 +231,8 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
 .noms b{color:var(--menthe);font-weight:800}
 .coeur{width:clamp(56px,9dvh,84px);height:auto;animation:bat 1.4s ease-in-out infinite}
 .actions{display:flex;flex-direction:column;align-items:center;gap:10px}
+.duo{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 16px}
+.bouton.carte{background:var(--menthe)}
 
 @keyframes monte{from{transform:translateY(.4em) rotate(4deg);opacity:0}to{transform:none;opacity:1}}
 @keyframes entre{from{transform:translateY(18px);opacity:0}}
@@ -330,7 +332,11 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
     <h2 class="signature" id="tFin"></h2>
     <p class="noms" id="noms"></p>
     <div class="actions">
-      <a class="bouton" id="finDate">Choisir mes dates</a>
+      <div class="duo">
+        <a class="bouton" id="finDate">Choisir mes dates</a>
+        <button class="bouton carte" type="button" id="maCarte">Télécharger ma carte</button>
+      </div>
+      <p class="aide" id="aideCarte" role="status" hidden></p>
       <button class="lien" type="button" id="recommencer">Revoir depuis le début</button>
     </div>
   </section>
@@ -676,6 +682,306 @@ function ecrireNoms(){
   } else z.textContent="De la part de toute l'équipe.";
   if(CADEAU.fin.texte) z.append(document.createElement("br"), CADEAU.fin.texte);
 }
+/* La carte de départ en PDF, dessinée dans le navigateur page par page (A4 à 150 points par pouce) */
+const MM=150/25.4, LP=Math.round(210*MM), HP=Math.round(297*MM), MARGE=Math.round(15*MM);   // 1240 × 1754 points, 15 mm de marge
+const FAM={titre:'"Bagel Fat One"', corps:'"Bricolage Grotesque"', main:'"Gochi Hand"'};
+const police=(poids,taille,fam)=>`${poids} ${taille}px ${fam}`;
+const ROSE="#FF5FA2", CITRON="#FFD23F", MENTHE="#4FE3B0", ARGILE="#FFF4EC", ENCRE="#140A3D", EMAIL="#1F3BFF";
+// Un hasard qui retombe toujours pareil, pour que la carte ne change pas d'un téléchargement à l'autre.
+const hasard=g=>()=>{ g=(g+0x6D2B79F5)|0; let t=Math.imul(g^g>>>15,1|g); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+
+let pdfJs=null;
+const chargerPdf=()=> pdfJs ||= new Promise((ok,ko)=>{ const s=document.createElement("script");
+  s.src="https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js"; s.integrity="sha384-qovJwSBbRDPP5cEjCp8S0UP66wrvnjaa60XMOGzTNanrThcrGfXfnZkvgY8N1KT3"; s.crossOrigin="anonymous";
+  s.onload=()=>window.jspdf&&window.jspdf.jsPDF?ok(window.jspdf.jsPDF):ko(new Error("jsPDF absent")); s.onerror=()=>{ s.remove(); ko(new Error("jsPDF injoignable")); };
+  document.head.appendChild(s); }).catch(e=>{ pdfJs=null; throw e; });
+
+// On attend les trois polices du cadeau, et on refuse de dessiner avec une police de secours.
+async function polices(){
+  const voulues=[["400",FAM.titre],["400",FAM.main],["400",FAM.corps],["600",FAM.corps],["800",FAM.corps]];
+  await Promise.all(voulues.map(([p,f])=>document.fonts.load(police(p,60,f),"Lucie éàçœ…«»’")));
+  await document.fonts.ready;
+  const pretes=new Set([...document.fonts].filter(f=>f.status==="loaded").map(f=>f.family.replace(/["']/g,"")));
+  if(!["Bagel Fat One","Gochi Hand","Bricolage Grotesque"].every(f=>pretes.has(f))) throw new Error("polices absentes");
+}
+const image=src=>new Promise((ok,ko)=>{ const i=new Image(); i.onload=()=>ok(i); i.onerror=()=>ko(new Error("image")); i.src=src; });
+// L'image remplit tout le cadre, recadrée au centre comme object-fit:cover.
+function couvrir(x,im,l,t,w,h){ const k=Math.max(w/im.naturalWidth,h/im.naturalHeight), sw=w/k, sh=h/k;
+  x.drawImage(im,(im.naturalWidth-sw)/2,(im.naturalHeight-sh)/2,sw,sh,l,t,w,h); }
+
+// Coupe un texte en lignes qui tiennent dans la largeur, en gardant les retours à la ligne et en coupant les mots trop longs.
+function couper(x,texte,largeur){
+  const lignes=[];
+  for(const para of String(texte).trim().split("\n")){
+    let ligne="";
+    // « ! ? ; : » restent collés au mot d'avant, comme dans le navigateur.
+    const mots=para.split(/\s+/).filter(Boolean).reduce((l,m)=>{ const p=l.length-1; if(p>=0 && (/^[!?;:»]/.test(m) || l[p]==="«")) l[p]+=" "+m; else l.push(m); return l; },[]);
+    for(let m of mots){
+      while(x.measureText(m).width>largeur){
+        if(ligne){ lignes.push(ligne); ligne=""; }
+        let k=1; while(k<m.length && x.measureText(m.slice(0,k+1)).width<=largeur) k++;
+        lignes.push(m.slice(0,k)); m=m.slice(k);
+      }
+      if(!m) continue;
+      const essai=ligne?ligne+" "+m:m;
+      if(x.measureText(essai).width<=largeur) ligne=essai; else { lignes.push(ligne); ligne=m; }
+    }
+    lignes.push(ligne);
+  }
+  return lignes;
+}
+// Les étiquettes en capitales espacées, centrées sur cx.
+const largeurEsp=(x,t,e)=>[...t].reduce((s,c)=>s+x.measureText(c).width,0)+e*(t.length-1);
+function espacer(x,t,cx,y,e){ let px=cx-largeurEsp(x,t,e)/2; x.textAlign="left"; for(const c of t){ x.fillText(c,px,y); px+=x.measureText(c).width+e; } }
+function couperEsp(x,t,largeur,e){ const l=[]; let ligne="";
+  for(const m of t.split(" ")){ const essai=ligne?ligne+" "+m:m; if(!ligne || largeurEsp(x,essai,e)<=largeur) ligne=essai; else { l.push(ligne); ligne=m; } }
+  return l.concat(ligne); }
+// Écrit des lignes centrées et renvoie la hauteur occupée.
+function lignes(x,l,cx,y,lh){ x.textAlign="center"; x.textBaseline="middle"; l.forEach((t,k)=>x.fillText(t,cx,y+lh*k+lh/2)); return l.length*lh; }
+
+// Le fond : l'émail, et les formes du ciel qui évitent les zones où il y a du texte.
+function fond(x,couleur,zones,graine){
+  x.fillStyle=couleur; x.fillRect(0,0,LP,HP);
+  const al=hasard(graine);
+  for(let i=0;i<28;i++){
+    let f=null;
+    for(let essai=0;essai<40 && !f;essai++){ const c={x:al()*LP,y:al()*HP,r:22+al()*42,a:al()*6,t:i%4,c:couleurs[i%4]};
+      if(!zones.some(([l,t,w,h])=>c.x>l-c.r-16&&c.x<l+w+c.r+16&&c.y>t-c.r-16&&c.y<t+h+c.r+16)) f=c; }
+    if(!f) continue;
+    x.save(); x.globalAlpha=.5; x.translate(f.x,f.y); x.rotate(f.a); x.fillStyle=x.strokeStyle=f.c; x.lineWidth=10; x.lineCap="round"; x.beginPath();
+    if(f.t===0){x.arc(0,0,f.r,0,Math.PI*2);x.fill();}
+    else if(f.t===1){for(let k=0;k<10;k++){const rr=k%2?f.r*.45:f.r;x.lineTo(Math.cos(k*Math.PI/5)*rr,Math.sin(k*Math.PI/5)*rr);}x.closePath();x.fill();}
+    else if(f.t===2){x.moveTo(-f.r,0);x.bezierCurveTo(-f.r/2,-f.r,f.r/2,f.r,f.r,0);x.stroke();}
+    else{x.rect(-f.r*.7,-f.r*.7,f.r*1.4,f.r*1.4);x.fill();}
+    x.restore();
+  }
+}
+const scotch=(x,cx,cy,w,h,a)=>{ x.save(); x.translate(cx,cy); x.rotate(a*Math.PI/180); x.shadowColor="rgba(20,10,61,.1)"; x.shadowBlur=4; x.shadowOffsetY=1;
+  x.fillStyle="rgba(255,244,236,.8)"; x.fillRect(-w/2,-h/2,w,h); x.restore(); };
+
+/* Page 1, la couverture, comme l'écran d'accueil */
+function couverture(x,lucie){
+  const r=310, ext=r*1.14, cx=LP/2, gap=34;
+  // Le titre en unités insécables, comme les mots du titre du site, avec « quelque chose » en rose.
+  const unites=[["Lucie,",ARGILE],["on",ARGILE],["a",ARGILE],["quelque chose",ROSE],["à te dire…",ARGILE]];
+  let fs=140, rang;
+  for(;fs>60;fs-=4){ x.font=police(400,fs,FAM.titre); const esp=x.measureText(" ").width; rang=[[]]; let lw=0;
+    for(const u of unites){ const w=x.measureText(u[0]).width, l=rang[rang.length-1];
+      if(l.length && lw+esp+w>LP-2*MARGE-40){ rang.push([u]); lw=w; } else { l.push(u); lw+=(l.length>1?esp:0)+w; } }
+    if(rang.length<=3 && unites.every(u=>x.measureText(u[0]).width<=LP-2*MARGE-40)) break; }
+  const lh=fs*.95, hTitre=rang.length*lh, hEt=34;
+  const total=ext*2+60+hEt+gap+hTitre, y0=(HP-total)/2, cy=y0+ext, yEt=y0+ext*2+60, yTitre=yEt+hEt+gap;
+  // La pastille, accrochée en bas à droite de l'assiette.
+  x.font=police(400,54,FAM.main); const pw=Math.max(x.measureText("Notre CRM").width,x.measureText("Boss Lady").width)+2*43, ph=2*57+2*27;
+  const px=cx+r+.28*r-pw, py=cy+r-.04*r-ph;
+  fond(x,EMAIL,[[cx-ext,cy-ext,ext*2,ext*2],[px,py,pw+30,ph+40],[MARGE,yEt-10,LP-2*MARGE,hEt+gap+hTitre+20]],1);
+  // L'assiette à rayures qui tourne sur le site, avec la photo de Lucie au milieu.
+  x.save(); x.shadowColor="rgba(20,10,61,.35)"; x.shadowBlur=64; x.shadowOffsetY=29; x.fillStyle=ROSE; x.beginPath(); x.arc(cx,cy,ext,0,Math.PI*2); x.fill(); x.restore();
+  [ROSE,CITRON,MENTHE,"#FF7A2F"].forEach((c,i)=>{ x.fillStyle=c; for(let k=i;k<24;k+=4){ const a=-Math.PI/2+k*Math.PI/12;
+    x.beginPath(); x.moveTo(cx,cy); x.arc(cx,cy,ext,a,a+Math.PI/12+.002); x.closePath(); x.fill(); } });
+  x.save(); x.beginPath(); x.arc(cx,cy,r,0,Math.PI*2); x.clip(); couvrir(x,lucie,cx-r,cy-r,r*2,r*2); x.restore();
+  x.strokeStyle=ARGILE; x.lineWidth=24; x.beginPath(); x.arc(cx,cy,r-12,0,Math.PI*2); x.stroke();
+  x.save(); x.translate(px+pw/2,py+ph/2); x.rotate(8*Math.PI/180);
+  x.fillStyle=ENCRE; x.beginPath(); x.roundRect(-pw/2,-ph/2+10,pw,ph,20); x.fill();
+  x.fillStyle=CITRON; x.beginPath(); x.roundRect(-pw/2,-ph/2,pw,ph,20); x.fill();
+  x.fillStyle=ENCRE; x.font=police(400,54,FAM.main); lignes(x,["Notre CRM","Boss Lady"],0,-57,57); x.restore();
+  x.fillStyle=ARGILE; x.font=police(800,30,FAM.corps); x.textBaseline="middle"; espacer(x,"DE LA PART DE TOUTE L'ÉQUIPE",cx,yEt+hEt/2,3.6);
+  x.font=police(400,fs,FAM.titre); x.textBaseline="middle"; const esp=x.measureText(" ").width;
+  rang.forEach((l,k)=>{ const w=l.reduce((s,u)=>s+x.measureText(u[0]).width,0)+esp*(l.length-1); let px2=cx-w/2;
+    x.textAlign="left"; for(const [t,c] of l){ x.fillStyle=c; x.fillText(t,px2,yTitre+lh*k+lh/2); px2+=x.measureText(t).width+esp; } });
+}
+
+/* Page 2, les cadeaux : le ticket retourné et le bon cadeau */
+function ticket(quand){
+  const W=900, P=50, I=W-2*P, c=document.createElement("canvas"), x=c.getContext("2d"), blocs=[];
+  // On mesure chaque bloc, puis on dessine sur un ticket juste assez haut.
+  x.font=police(800,24,FAM.corps); const et=couperEsp(x,"TICKET D'ATELIER · VALABLE POUR TOUTE LA BANDE",I,2.9); blocs.push([et.length*34,y=>{ x.fillStyle=EMAIL; x.font=police(800,24,FAM.corps); x.textBaseline="middle"; et.forEach((t,k)=>espacer(x,t,W/2,y+17+34*k,2.9)); }]);
+  x.font=police(400,80,FAM.titre); const ti=couper(x,A.titre,I); blocs.push([ti.length*76,y=>{ x.fillStyle=ENCRE; x.font=police(400,80,FAM.titre); lignes(x,ti,W/2,y,76); }]);
+  x.font=police(400,30,FAM.corps); const te=couper(x,A.texte,I); blocs.push([te.length*43,y=>{ x.fillStyle=ENCRE; x.font=police(400,30,FAM.corps); lignes(x,te,W/2,y,43); }]);
+  const cols=[["OÙ",A.lieu],["QUAND",quand||A.date]], cw=(I-60)/2;
+  x.font=police(700,30,FAM.corps); const dd=cols.map(([,v])=>couper(x,v,cw)), hInfos=24+26+8+Math.max(...dd.map(l=>l.length))*40;
+  blocs.push([hInfos,y=>{ x.strokeStyle=ENCRE; x.lineWidth=3; x.setLineDash([12,9]); x.beginPath(); x.moveTo(P,y); x.lineTo(W-P,y); x.stroke(); x.setLineDash([]);
+    x.font=police(700,30,FAM.corps); const larg=dd.map(l=>Math.max(...l.map(t=>x.measureText(t).width),90)); const tot=larg[0]+larg[1]+60; let gx=(W-tot)/2;
+    cols.forEach(([t],k)=>{ const cx=gx+larg[k]/2; x.fillStyle=EMAIL; x.font=police(800,18,FAM.corps); x.textBaseline="middle"; espacer(x,t,cx,y+24+13,1.8);
+      x.fillStyle=ENCRE; x.font=police(700,30,FAM.corps); lignes(x,dd[k],cx,y+24+26+8,40); gx+=larg[k]+60; }); }]);
+  blocs.push([22,y=>{ x.globalAlpha=.55; x.fillStyle=ENCRE; x.font=police(800,17,FAM.corps); x.textBaseline="middle"; espacer(x,"N° 0001 · LUCIE + LA BANDE",W/2,y+11,3.4); x.globalAlpha=1; }]);
+  const G=26, H=Math.ceil(2*P+blocs.reduce((s,b)=>s+b[0],0)+G*(blocs.length-1));
+  c.width=W; c.height=H;
+  x.fillStyle=ARGILE; x.beginPath(); x.roundRect(0,0,W,H,40); x.fill();
+  let y=P; for(const [h,dessin] of blocs){ dessin(y); y+=h+G; }
+  // Les deux encoches du ticket, à 72 % de sa hauteur.
+  x.globalCompositeOperation="destination-out"; for(const ex of [0,W]){ x.beginPath(); x.arc(ex,H*.72,22,0,Math.PI*2); x.fill(); }
+  return c;
+}
+function bonCadeau(){
+  const W=760, P=44, I=W-2*P, c=document.createElement("canvas"), x=c.getContext("2d");
+  const montant=CADEAU.bon.montant||"Carte blanche";
+  let fm=150; x.font=police(400,fm,FAM.titre); while(fm>60 && x.measureText(montant).width>I-48){ fm-=4; x.font=police(400,fm,FAM.titre); }
+  const lm=couper(x,montant,I-48), hG=Math.max(230,lm.length*fm*.9+60);
+  x.font=police(700,32,FAM.corps); const lt=couper(x,CADEAU.bon.texte,I);
+  x.font=police(400,64,FAM.titre); const lh3=couper(x,"Un bon cadeau",I);
+  const H=Math.ceil(64+lh3.length*64+24+hG+24+lt.length*45+64); c.width=W; c.height=H;
+  x.fillStyle=ROSE; x.beginPath(); x.roundRect(0,0,W,H,40); x.fill();
+  let y=64; x.fillStyle=ENCRE; x.font=police(400,64,FAM.titre); y+=lignes(x,lh3,W/2,y,64)+24;
+  x.fillStyle=ARGILE; x.beginPath(); x.roundRect(P,y,I,hG,28); x.fill();
+  x.fillStyle=EMAIL; x.font=police(400,fm,FAM.titre); lignes(x,lm,W/2,y+(hG-lm.length*fm*.9)/2,fm*.9); y+=hG+24;
+  x.fillStyle=ENCRE; x.font=police(700,32,FAM.corps); lignes(x,lt,W/2,y,45);
+  return c;
+}
+// Dessine une pièce penchée de a degrés, posée par son coin haut gauche (l, t) une fois penchée.
+const boite=(w,h,a)=>{ const r=Math.abs(a*Math.PI/180); return [w*Math.cos(r)+h*Math.sin(r), w*Math.sin(r)+h*Math.cos(r)]; };
+function poser(x,c,l,t,a,ombre){ const [bw,bh]=boite(c.width,c.height,a);
+  x.save(); x.translate(l+bw/2,t+bh/2); x.rotate(a*Math.PI/180); x.shadowColor=ombre; x.shadowOffsetY=16; x.drawImage(c,-c.width/2,-c.height/2); x.restore(); return [bw,bh]; }
+function cadeaux(x,quand){
+  const t=ticket(quand), b=bonCadeau(), [tw,th]=boite(t.width,t.height,-2), [bw,bh]=boite(b.width,b.height,2);
+  const hEt=34, ecart=26, entre=110, total=hEt+ecart+th+entre+hEt+ecart+bh+44, y0=Math.max(MARGE,(HP-total)/2);
+  const tl=MARGE+20, bl=LP-MARGE-20-bw, yT=y0+hEt+ecart, yB=yT+th+entre+hEt+ecart;
+  fond(x,EMAIL,[[tl,y0,tw,th+hEt+ecart+20],[bl,yB-hEt-ecart-30,bw,bh+hEt+ecart+50]],2);
+  x.fillStyle=ARGILE; x.font=police(800,30,FAM.corps); x.textBaseline="middle";
+  espacer(x,"CADEAU NUMÉRO 1",tl+tw/2,y0+hEt/2,3.6); espacer(x,"CADEAU NUMÉRO 2",bl+bw/2,yB-ecart-hEt/2,3.6);
+  poser(x,t,tl,yT,-2,"rgba(20,10,61,.3)"); poser(x,b,bl,yB,2,"rgba(20,10,61,.25)");
+  scotch(x,bl+bw/2,yB+6,176,48,-3);
+}
+
+/* Les pages des mots : des post it éparpillés, sans jamais se chevaucher */
+function mesurerMot(x,m,k){
+  const al=hasard(k*7919+17), n=m.texte.length;
+  const fs=n<=30?54:n<=90?38:n<=180?33:30, lh=Math.round(fs*1.15), w=Math.round((n>180?450:n>90?420:390)+al()*40), P=34, I=w-2*P;
+  x.font=police(400,fs,FAM.main); const lt=couper(x,m.texte,I);
+  x.font=police(800,30,FAM.corps); const lq=couper(x,"— "+m.qui,I);
+  const ph=m.photo?Math.round(I*.58):0, phH=ph?Math.round((ph-16)*3/4)+8+16:0;
+  const contenu=(ph?phH+24:0)+lt.length*lh+14+lq.length*36;
+  return {type:"mot",m,w,h:Math.max(Math.ceil(contenu+2*P),Math.round(w*.7)),a:(al()*2-1)*3,fs,lh,lt,lq,ph,phH,contenu,haut:26,bas:20};
+}
+function dessinerMot(x,o){
+  const {w,h,m}=o; let y=(h-o.contenu)/2;
+  x.save(); x.shadowColor="rgba(20,10,61,.2)"; x.shadowOffsetY=18; x.fillStyle=fondsPost[m.couleur]||CITRON; x.fillRect(0,0,w,h); x.restore();
+  if(o.ph){
+    // La photo en polaroïd, scotchée sur le post it.
+    x.save(); x.translate(w/2,y+o.phH/2); x.rotate(-3*Math.PI/180);
+    x.save(); x.shadowColor="rgba(20,10,61,.15)"; x.shadowOffsetY=6; x.fillStyle="#fff"; x.fillRect(-o.ph/2,-o.phH/2,o.ph,o.phH); x.restore();
+    couvrir(x,m.photo,-o.ph/2+8,-o.phH/2+8,o.ph-16,o.phH-24); x.restore();
+    scotch(x,w/2,y-2,112,34,3); y+=o.phH+24;
+  } else scotch(x,w/2,0,144,42,-2);
+  x.fillStyle=ENCRE; x.font=police(400,o.fs,FAM.main); y+=lignes(x,o.lt,w/2,y,o.lh)+14;
+  x.font=police(800,30,FAM.corps); lignes(x,o.lq,w/2,y,36);
+}
+function pagesMots(x,mots,lucie){
+  if(!mots.length) return [];
+  const haut1=MARGE+110, bas=HP-MARGE, ecart=48, cw=(LP-2*MARGE-ecart)/2;
+  // La photo de Lucie ouvre la première page des mots.
+  const blocs=[{type:"lucie",w:320,h:370,a:-3,haut:6,bas:20}, ...mots.map((m,k)=>mesurerMot(x,m,k))];
+  // Deux colonnes : chaque post it va dans la moins remplie, un peu décalé au hasard, et au plus « max » mots par page.
+  const ranger=max=>{
+    const pages=[]; let page;
+    const nouvelle=premiere=>{ const y=premiere?haut1:MARGE; page={premiere,cols:[[],[]],y:[y,y+40],n:0}; pages.push(page); };
+    nouvelle(true);
+    blocs.forEach((b0,k)=>{
+      const b={...b0}, al=hasard(k*104729+3);
+      let [W,H]=boite(b.w,b.h,b.a); while(W>cw && Math.abs(b.a)>.2){ b.a/=2; [W,H]=boite(b.w,b.h,b.a); }
+      b.W=W; b.H=H; const hautTot=H+b.haut+b.bas, marge=12+al()*28;
+      const essayer=()=>{ if(b.type==="mot" && page.n>=max) return -1;
+        return [0,1].sort((i,j)=>page.y[i]-page.y[j]).find(c=>page.y[c]+marge+hautTot<=bas) ?? -1; };
+      let col=essayer(); if(col<0){ nouvelle(false); col=0; }
+      b.x=MARGE+col*(cw+ecart)+al()*(cw-W); b.y=page.y[col]+marge; page.y[col]=b.y+hautTot; page.cols[col].push(b); if(b.type==="mot") page.n++;
+    });
+    return pages;
+  };
+  // Pour ne pas laisser un mot tout seul sur la dernière page, on répartit les mots au plus juste sur le même nombre de pages.
+  let pages=ranger(6);
+  for(let max=5;max>=3;max--){ const p=ranger(max); if(p.length>pages.length) break; pages=p; }
+  // La place qui reste en bas est répartie entre les post it, pour remplir la page.
+  for(const p of pages) p.cols.forEach((c,i)=>{ const reste=bas-p.y[i]; c.forEach((b,k)=>{ b.y+=reste*(k+1)/(c.length+1); }); });
+  return pages.map((p,k)=>x=>{
+    const tous=p.cols.flat();
+    fond(x,EMAIL,[...tous.map(b=>[b.x,b.y,b.W,b.H+b.haut+b.bas]),...(p.premiere?[[MARGE,MARGE,LP-2*MARGE,90]]:[])],10+k);
+    if(p.premiere){ x.fillStyle=ARGILE; x.font=police(400,84,FAM.titre); lignes(x,["Le mur de l'équipe"],LP/2,MARGE,84); }
+    for(const b of tous){ x.save(); x.translate(b.x+b.W/2,b.y+b.haut+b.H/2); x.rotate(b.a*Math.PI/180); x.translate(-b.w/2,-b.h/2);
+      if(b.type==="lucie"){ x.save(); x.shadowColor="rgba(20,10,61,.2)"; x.shadowOffsetY=18; x.fillStyle="#fff"; x.fillRect(0,0,b.w,b.h); x.restore(); couvrir(x,lucie,20,20,b.w-40,b.w-40); }
+      else dessinerMot(x,b);
+      x.restore(); }
+  });
+}
+
+/* Dernière page, le mot de fin comme sur l'écran de fin */
+function dos(x,noms){
+  const I=LP-2*MARGE-80, cx=LP/2;
+  x.font=police(400,150,FAM.titre); const lt=couper(x,"De la part de toute l'équipe",I);
+  x.font=police(800,42,FAM.corps); const ln=noms.length?couper(x,new Intl.ListFormat("fr",{type:"conjunction"}).format(noms),I):[];
+  x.font=police(600,46,FAM.corps); const lf=CADEAU.fin.texte?couper(x,CADEAU.fin.texte,I):[];
+  const hC=200, hT=lt.length*143, hN=ln.length*60, hF=lf.length*64, total=hC+50+hT+(hN?50+hN:0)+(hF?40+hF:0), y0=(HP-total)/2;
+  fond(x,ENCRE,[[cx-I/2,y0-20,I,total+40]],99);
+  // Le cœur du dernier écran.
+  x.save(); x.translate(cx-32*hC/56,y0); x.scale(hC/56,hC/56);
+  x.fillStyle=ROSE; x.fill(new Path2D("M32 54S2 36 2 17C2 8 9 2 17 2c6 0 11 3 15 9 4-6 9-9 15-9 8 0 15 6 15 15 0 19-30 37-30 37z"));
+  x.strokeStyle=ARGILE; x.lineWidth=4; x.lineCap="round"; x.stroke(new Path2D("M14 14c2-4 6-5 9-4")); x.restore();
+  let y=y0+hC+50; x.fillStyle=CITRON; x.font=police(400,150,FAM.titre); y+=lignes(x,lt,cx,y,143);
+  if(hN){ y+=50; x.fillStyle=MENTHE; x.font=police(800,42,FAM.corps); y+=lignes(x,ln,cx,y,60); }
+  if(hF){ y+=40; x.fillStyle=ARGILE; x.font=police(600,46,FAM.corps); lignes(x,lf,cx,y,64); }
+}
+
+// Si Lucie a coché des dates, on garde la sienne où le plus de monde est dispo, comme le sondage.
+async function dateDeLucie(b){
+  const [sc,sd]=await Promise.all([b.getDocs(b.collection(b.db,"creneaux")),b.getDocs(b.collection(b.db,"dispos"))]);
+  const creneaux=new Map(sc.docs.map(d=>[d.id,d.data()])), dispos=sd.docs.map(d=>d.data());
+  const estLucie=d=>(d.prenom||"").trim().normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase()==="lucie";
+  const siennes=[...new Set(dispos.filter(estLucie).flatMap(d=>d.dates||[]))].filter(id=>creneaux.has(id)).map(id=>({id,...creneaux.get(id)}));
+  if(!siennes.length) return "";
+  const auj=new Date(); auj.setHours(0,0,0,0);
+  const futures=siennes.filter(c=>new Date(c.date+"T23:59")>=auj), choix=futures.length?futures:siennes;
+  const n=c=>dispos.filter(d=>(d.dates||[]).includes(c.id)).length;
+  choix.sort((a,b)=>n(b)-n(a)||(a.date+a.moment).localeCompare(b.date+b.moment));
+  const t=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}).format(new Date(choix[0].date+"T12:00"));
+  return t[0].toUpperCase()+t.slice(1)+(choix[0].moment?", "+choix[0].moment.toLowerCase():"");
+}
+
+async function fabriquerCarte(){
+  const [Pdf,b]=await Promise.all([chargerPdf(),chargerBase()]);
+  const [s,quand]=await Promise.all([b.getDocs(b.collection(b.db,"mots")), dateDeLucie(b).catch(()=>"")]);
+  const brut=s.docs.map(d=>d.data({serverTimestamps:"estimate"})).filter(m=>m.texte)
+    .sort((a,c)=>(a.date?a.date.toMillis():0)-(c.date?c.date.toMillis():0));
+  await polices();
+  const [lucie,...photos]=await Promise.all([image("assets/lucie.jpg"),
+    ...brut.map(m=>typeof m.photo==="string"&&m.photo.startsWith("data:image/jpeg;base64,")?image(m.photo).catch(()=>null):null)]);
+  const liste=brut.map((m,k)=>({texte:m.texte,qui:m.prenom||"L'équipe",couleur:m.couleur,photo:photos[k]}));
+  const vus=new Set(), noms=[];
+  for(const n of [...liste.map(m=>m.qui),...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(p.toLowerCase())){ vus.add(p.toLowerCase()); noms.push(p); } }
+  const c=document.createElement("canvas"); c.width=LP; c.height=HP; const x=c.getContext("2d");
+  const pages=[x=>couverture(x,lucie), x=>cadeaux(x,quand), ...pagesMots(x,liste,lucie), x=>dos(x,noms)];
+  const pdf=new Pdf({orientation:"portrait",unit:"mm",format:"a4",compress:true});
+  for(const [k,dessiner] of pages.entries()){
+    await new Promise(r=>setTimeout(r));     // laisse respirer l'écran entre deux pages
+    x.save(); x.clearRect(0,0,LP,HP); dessiner(x); x.restore();
+    if(k) pdf.addPage("a4","portrait");
+    pdf.addImage(c.toDataURL("image/jpeg",.85),"JPEG",0,0,210,297,undefined,"NONE");
+  }
+  return pdf.output("blob");
+}
+
+// Sur téléphone, on propose le partage pour ranger la carte dans Fichiers ou Photos. Sinon, un téléchargement classique.
+const NOM_CARTE="carte-de-depart-lucie.pdf", boutonCarte=$("#maCarte"), aideCarte=$("#aideCarte");
+let cartePrete=null;
+function telecharger(f){ const u=URL.createObjectURL(f), a=document.createElement("a"); a.href=u; a.download=NOM_CARTE; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),60000); }
+async function donnerCarte(f){
+  if(matchMedia("(pointer: coarse)").matches && navigator.share && navigator.canShare && navigator.canShare({files:[f]})){
+    try{ await navigator.share({files:[f],title:"Ta carte de départ"}); return; }
+    catch(e){ if(e.name==="AbortError") return;
+      // La fabrication a pris trop de temps pour que le navigateur accepte le partage : un toucher de plus suffit.
+      if(e.name==="NotAllowedError"){ cartePrete=f; boutonCarte.textContent="Enregistrer ma carte"; return; } }
+  }
+  telecharger(f);
+}
+boutonCarte.addEventListener("click",async()=>{
+  aideCarte.hidden=true;
+  if(cartePrete){ const f=cartePrete; cartePrete=null; boutonCarte.textContent="Télécharger ma carte"; return donnerCarte(f); }
+  boutonCarte.disabled=true; boutonCarte.textContent="Je prépare ta carte…";
+  let f=null;
+  try{ f=new File([await fabriquerCarte()],NOM_CARTE,{type:"application/pdf"}); }
+  catch(e){ aideCarte.textContent="La carte n'a pas pu être créée. Vérifie ta connexion et réessaie."; aideCarte.hidden=false; }
+  boutonCarte.disabled=false; boutonCarte.textContent="Télécharger ma carte";
+  if(f){ bip(660); donnerCarte(f); }
+});
+
 $("#recommencer").addEventListener("click",()=>aller(0));
 aller(retourDate?idx("fin"):0,false);
 // Retour avec la flèche du téléphone quand la page sort du cache : on retombe aussi sur la fin.
