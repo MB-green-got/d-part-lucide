@@ -171,14 +171,16 @@ body[data-ecran="bon"] :focus-visible,body[data-ecran="mur"] :focus-visible{outl
 /* Sur téléphone on y est déjà, le code ne sert à rien. */
 
 /* Mur */
-.mur{width:100%;display:flex;align-items:center;justify-content:center;gap:clamp(8px,3vw,20px)}
-.carte-mur{width:min(64vw,42dvh,380px);aspect-ratio:1/1.05;flex:none;position:relative;touch-action:pan-y}
-/* Une pile de post it derrière celui qu'on lit. */
-.carte-mur::before,.carte-mur::after{content:"";position:absolute;inset:0;box-shadow:0 8px 0 rgba(20,10,61,.12)}
-.carte-mur::before{background:var(--menthe);transform:rotate(7deg) translate(10px,6px)}
-.carte-mur::after{background:var(--citron);transform:rotate(-5deg) translate(-8px,4px)}
-.carte-mur.seul::before,.carte-mur.seul::after{display:none}
-.carte-mur > *{position:absolute;inset:0;z-index:1;animation:pose .45s var(--ressort) both}
+/* Une pile de post it qui attend d'être ouverte. */
+.pile{width:min(46vw,26dvh,240px);aspect-ratio:1;flex:none;position:relative;border:0;padding:0;background:none;cursor:pointer;margin:1.2dvh 0}
+.pile span{position:absolute;inset:0;box-shadow:0 10px 0 rgba(20,10,61,.15);transition:transform .4s var(--ressort)}
+.pile span:nth-child(1){background:var(--menthe);transform:rotate(9deg) translate(12px,6px)}
+.pile span:nth-child(2){background:var(--citron);transform:rotate(-7deg) translate(-10px,4px)}
+.pile span:nth-child(3){background:var(--rose);transform:rotate(2deg);display:grid;place-items:center;font-family:var(--main);font-size:clamp(1.4rem,min(7vw,4dvh),2.2rem);color:var(--encre)}
+.pile span:nth-child(3)::before{content:"";position:absolute;top:-12px;left:50%;width:80px;height:24px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.8)}
+.actif .pile{animation:flotte 3.2s ease-in-out infinite}
+.pile:hover span:nth-child(1){transform:rotate(14deg) translate(22px,4px)}
+.pile:hover span:nth-child(2){transform:rotate(-12deg) translate(-20px,2px)}
 .postit{color:var(--encre);padding:clamp(16px,3dvh,26px);display:flex;flex-direction:column;justify-content:center;gap:12px;box-shadow:0 12px 0 rgba(20,10,61,.2)}
 .postit::before{content:"";position:absolute;top:-12px;left:50%;width:90px;height:26px;transform:translateX(-50%) rotate(-2deg);background:rgba(255,244,236,.8);box-shadow:0 1px 3px rgba(20,10,61,.1)}
 .postit p{margin:0;font-family:var(--main);font-size:clamp(1.1rem,min(5.6vw,3.2dvh),1.7rem);line-height:1.15;overflow-wrap:anywhere;white-space:pre-line}
@@ -187,10 +189,6 @@ body[data-ecran="bon"] :focus-visible,body[data-ecran="mur"] :focus-visible{outl
 .polaroid{background:#fff;padding:12px 12px 0;color:var(--encre);box-shadow:0 12px 0 rgba(20,10,61,.2);display:flex;flex-direction:column;margin:0}
 .polaroid img{width:100%;flex:1;min-height:0;object-fit:cover}
 .polaroid figcaption{font-family:var(--main);font-size:1.2rem;padding:8px 0 10px;min-height:14px}
-.compteur{font-weight:800;font-variant-numeric:tabular-nums;min-height:1.4em;display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:center}
-.sous{font-weight:600;margin:0;max-width:34ch}
-.tout{font:800 .9rem var(--body);color:var(--argile);background:var(--encre);border:0;border-radius:999px;padding:.65em 1.15em;cursor:pointer;transition:transform .2s var(--ressort)}
-.tout:hover{transform:translateY(-2px) rotate(-2deg)}
 
 /* Tout le mur, en grand */
 dialog.grand{width:100%;height:100%;max-width:none;max-height:none;margin:0;border:0;padding:0;background:var(--argile);color:var(--encre)}
@@ -212,6 +210,8 @@ dialog.grand::backdrop{background:rgba(20,10,61,.5)}
 .postit .polaroid.colle img{aspect-ratio:4/3;flex:none}
 .postit .polaroid.colle figcaption{min-height:6px;padding:0}
 .grille .postit .polaroid.colle{width:80%;margin-top:4px}
+/* En bas du mur, on enchaîne sur la fin. */
+.apres{display:flex;justify-content:center;padding:8px 0 16px}
 /* La photo de Lucie en tête du mur. */
 .une{max-width:1080px;margin:0 auto 40px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:24px 40px}
 .une .polaroid{width:min(100%,320px);transform:rotate(-3deg)}
@@ -302,6 +302,7 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
       </div>
     </div>
     <p class="aide" id="aideTicket">Touche le ticket pour le retourner</p>
+    <button class="bouton pret" type="button" id="ticketSuite" hidden>Mais ce n'est pas tout…</button>
   </section>
 
   <section class="ecran" data-ecran="bon" aria-label="Cadeau numéro 2" tabindex="-1">
@@ -318,13 +319,10 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
   </section>
 
   <section class="ecran" data-ecran="mur" aria-labelledby="tMur" tabindex="-1">
-    <h2 class="titre-grand" id="tMur">Le mur de l'équipe</h2>
-    <div class="mur" data-noswipe>
-      <button class="rond" type="button" id="murPrec" aria-label="Mot précédent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
-      <div class="carte-mur" id="carteMur" aria-live="polite"></div>
-      <button class="rond" type="button" id="murSuiv" aria-label="Mot suivant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
-    </div>
-    <div class="compteur"><span id="compteur"></span><button class="tout" type="button" id="voirTout" hidden>Voir tout le mur</button></div>
+    <p class="etiquette">Le mur de l'équipe</p>
+    <h2 class="titre-grand" id="tMur">On avait quelque chose à te dire avant que tu vogues vers d'autres horizons</h2>
+    <button class="pile" type="button" id="pileMur" tabindex="-1" aria-hidden="true"><span></span><span></span><span>Pour toi</span></button>
+    <button class="bouton pret" type="button" id="ouvrirMur">Ouvrir le mur</button>
   </section>
 
   <section class="ecran" data-ecran="fin" aria-labelledby="tFin" tabindex="-1">
@@ -356,10 +354,11 @@ dialog.loupe::backdrop{background:rgba(20,10,61,.92)}
 
 <dialog class="grand" id="toutMur" aria-labelledby="tTout">
   <header>
-    <h2 id="tTout">Tout le mur</h2>
+    <h2 id="tTout">Le mur de l'équipe</h2>
     <button class="rond" type="button" id="fermerTout" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </header>
-  <div class="defile"><div class="une" id="une"></div><div class="grille" id="grille"></div></div>
+  <div class="defile"><div class="une" id="une"></div><div class="grille" id="grille"></div>
+    <div class="apres"><button class="bouton" type="button" id="murSuite">La suite</button></div></div>
 </dialog>
 
 <dialog class="loupe" id="loupe" aria-label="Photo en grand">
@@ -381,20 +380,20 @@ const CADEAU = {
   },
   lienDate: new URL("date/?prenom=Lucie", location.href).href,   // construite à partir de l'adresse du site, avec le prénom de Lucie déjà rempli
   bon: {
-    montant: "",                    // par exemple "120 €", vide affiche « Carte blanche »
-    texte: "Pour te faire plaisir, c'est toi qui choisis."
+    montant: "200 €",               // par exemple "120 €", vide affiche « Carte blanche »
+    texte: "Pour t'acheter un bel outfit."
   },
   indices: [
     { indice: "Il y aura de la peinture, mais pas sur les murs.", souvenir: "Notre CRM Boss Lady, couronnée le jour de son anniversaire." },
     { indice: "Tu repartiras avec un objet fait de tes mains, plus ou moins réussi.", souvenir: "Celle qui a fait partir les tickets d'or de la levée." },
     { indice: "On boira un verre pendant que ça sèche.", souvenir: "Une vraie baroudeuse, il paraît." }
   ],
-  // La photo de Lucie s'affiche en premier avec sa phrase, puis les post it de l'équipe en alternance avec les photos suivantes.
+  // La photo de Lucie s'affiche en premier, puis les post it de l'équipe en alternance avec les photos suivantes.
   // Les photos jointes à un mot depuis la carte de l'équipe sont scotchées sur le post it de ce mot.
   // Pour ajouter une photo, dépose la dans assets/photos et ajoute une ligne, par exemple
   // { type: "photo", src: "assets/photos/pot-de-depart.jpg", legende: "" },
   mur: [
-    { type: "photo", src: "assets/lucie.jpg", legende: "", phrase: "On avait quelque chose à te dire avant que tu vogues vers d'autres horizons" }
+    { type: "photo", src: "assets/lucie.jpg", legende: "" }   // sa phrase est le titre de l'écran du mur, dans le HTML
   ],
   fin: {
     titre: "Merci pour tout, Lucie",
@@ -518,7 +517,7 @@ function arrive(n){
   if(n==="ticket" && !feteTicket){ feteTicket=true; setTimeout(()=>fete(true),300); melodie([523,659,784]); }
   if(n==="ticket" && $("#ticket").classList.contains("ouvert")) appel();
   if(n==="bon"){ peindreGrattoir(); if(bonOk) appel(); }
-  if(n==="mur") montrerMot(0);
+  if(n==="mur" && murVu) appel();
   if(n==="fin"){ ecrireNoms(); if(!feteFin){ feteFin=true; setTimeout(()=>fete(true),300); melodie([523,659,784,1046]); } }
 }
 
@@ -557,9 +556,11 @@ $("#defourner").addEventListener("click",()=>{ fourOk=true; memoire.ecrire("luci
 /* Ticket */
 let ticketVu=false;
 const retourner=()=>{ const t=$("#ticket"), ouvert=t.classList.toggle("ouvert"); t.setAttribute("aria-pressed",ouvert); bip(600);
-  $("#aideTicket").textContent=ouvert?"Touche encore pour le retourner, ou passe à la suite":"Touche le ticket pour le retourner";
+  // Une fois retourné, l'aide laisse la place au bouton qui mène au cadeau suivant.
+  $("#aideTicket").hidden=ouvert; $("#ticketSuite").hidden=!ouvert;
   if(ouvert){ appel(); if(!ticketVu){ ticketVu=true; fete(false); } } };
 $("#ticket").addEventListener("click",retourner);
+$("#ticketSuite").addEventListener("click",()=>{ aller(ici+1); bip(500); });
 $("#ticket").addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); e.stopPropagation(); retourner(); } });
 
 /* Bon à gratter */
@@ -605,8 +606,8 @@ addEventListener("resize",peindreGrattoir);
 let base=null;
 const chargerBase=()=> base ||= import("./js/base.js").catch(e=>{ base=null; throw e; });
 
-/* Mur, un mot à la fois */
-let mot=0, mots=[], ecoute=null, signature=""; const fondsPost={citron:"#FFD23F",menthe:"#4FE3B0",rose:"#FF5FA2",mandarine:"#FF7A2F",argile:"#FFFFFF"};
+/* Le mur, ouvert d'un coup en grand */
+let murVu=false, mots=[], ecoute=null, signature=""; const fondsPost={citron:"#FFD23F",menthe:"#4FE3B0",rose:"#FF5FA2",mandarine:"#FF7A2F",argile:"#FFFFFF"};
 // La photo de Lucie d'abord, puis un post it, une photo, un post it, et ainsi de suite.
 function liste(){
   const P=CADEAU.mur, L=P.slice(0,1);
@@ -623,57 +624,37 @@ function element(m,k){
   if(m.photo){ const f=polaroid(m.photo,"Photo de "+(m.qui||"l'équipe"),""); f.classList.add("colle"); p.classList.add("avec-photo"); p.appendChild(f); }
   const t=document.createElement("p"); t.textContent=m.texte; const q=document.createElement("span"); q.className="qui"; q.textContent=m.qui||"L'équipe"; p.append(t,q); return p;
 }
-function montrerMot(i){
-  const L=liste(); if(!L.length) return; mot=(i+L.length)%L.length; const z=$("#carteMur"); z.textContent="";
-  const el=element(L[mot],mot); z.appendChild(el); z.classList.toggle("seul",L.length<2);
-  if(el.classList.contains("postit")){
-    // Un long mot rétrécit jusqu'à tenir dans le post it.
-    const t=el.querySelector("p"), q=el.querySelector(".qui"), f=el.querySelector(".colle"), cs=getComputedStyle(el), gap=parseFloat(cs.rowGap||0);
-    const place=el.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)-gap-(f?f.offsetHeight+gap:0);
-    let taille=parseFloat(getComputedStyle(t).fontSize);
-    while(t.offsetHeight+q.offsetHeight>place && taille>11){ taille-=1; t.style.fontSize=taille+"px"; } }
-  // La photo de Lucie ouvre le mur sans compter parmi les mots.
-  $("#compteur").textContent=mot>0?`${mot} sur ${L.length-1}`:"";
-  $("#murPrec").hidden=$("#murSuiv").hidden=L.length<2;
-  $("#voirTout").hidden=L.length<3;
-}
 // Les mots de la carte arrivent en direct à partir de l'écran des dates, et l'écoute reste ouverte jusqu'à la fin.
 // Si la base ne répond pas, le mur garde ce qu'il affiche déjà.
 function ecouterMur(){
   if(ecoute) return; ecoute=true;
   chargerBase().then(({db,collection,onSnapshot})=>{
     onSnapshot(collection(db,"mots"), s=>{
-      const avant=liste()[mot];
       const liste_=s.docs.map(d=>({id:d.id,...d.data({serverTimestamps:"estimate"})})).filter(m=>m.texte)
         .sort((a,b)=>(a.date?a.date.toMillis():0)-(b.date?b.date.toMillis():0));
       const photo=m=>typeof m.photo==="string"&&m.photo.startsWith("data:image/jpeg;base64,")?m.photo:"";
       const sig=JSON.stringify(liste_.map(m=>[m.id,m.prenom,m.texte,m.couleur,photo(m).length,photo(m).slice(-40)])); if(sig===signature) return; signature=sig;
       mots=liste_.map(m=>({type:"mot",id:m.id,texte:m.texte,qui:m.prenom,couleur:m.couleur,photo:photo(m)}));
-      const k=liste().findIndex(x=>x===avant||(avant&&avant.id&&x.id===avant.id));
-      const n=ecrans[ici].dataset.ecran;
-      if(n==="mur") montrerMot(k<0?mot:k);
-      if(n==="fin") ecrireNoms();
+      if(ecrans[ici].dataset.ecran==="fin") ecrireNoms();
       if($("#toutMur").open) remplirGrille();
     },()=>{});
   }).catch(()=>{ ecoute=null; });
 }
-$("#murPrec").addEventListener("click",()=>{ montrerMot(mot-1); bip(480); });
-$("#murSuiv").addEventListener("click",()=>{ montrerMot(mot+1); bip(560); });
-// Sur le mur, glisser passe d'un mot à l'autre.
-let mx=null;
-$("#carteMur").addEventListener("touchstart",e=>{ mx=e.touches[0].clientX; },{passive:true});
-$("#carteMur").addEventListener("touchend",e=>{ if(mx===null) return; const dx=e.changedTouches[0].clientX-mx; mx=null;
-  if(Math.abs(dx)>40 && liste().length>1){ montrerMot(mot+(dx<0?1:-1)); bip(dx<0?560:480); } },{passive:true});
 
-// La photo de Lucie et sa phrase en tête, puis tout le reste du mur en colonnes.
+// La photo de Lucie en tête (sa phrase est déjà le titre de l'écran du mur), puis tout le reste du mur en colonnes.
 function remplirGrille(){
   const L=liste(), u=$("#une"), g=$("#grille"); u.textContent=""; g.textContent="";
   const tete=L[0]===CADEAU.mur[0] ? L.shift() : null;
-  if(tete){ u.appendChild(polaroid(tete.src,tete.alt||"Lucie","")); if(tete.phrase){ const p=document.createElement("p"); p.textContent=tete.phrase; u.appendChild(p); } }
+  if(tete) u.appendChild(polaroid(tete.src,tete.alt||"Lucie",""));
   L.forEach((m,k)=>{ const w=document.createElement("div"); const el=element(m,k+1); el.querySelectorAll("img").forEach(i=>i.loading="lazy"); w.appendChild(el); g.appendChild(w); });
 }
-$("#voirTout").addEventListener("click",()=>{ remplirGrille(); $("#toutMur").showModal(); bip(660); });
+const ouvrirMur=()=>{ remplirGrille(); $("#toutMur").showModal(); $("#toutMur .defile").scrollTop=0; bip(660); murVu=true; };
+$("#ouvrirMur").addEventListener("click",ouvrirMur);
+$("#pileMur").addEventListener("click",ouvrirMur);
 $("#fermerTout").addEventListener("click",()=>$("#toutMur").close());
+// En refermant le mur, la flèche suivante invite à continuer. « La suite » y mène directement.
+$("#toutMur").addEventListener("close",appel);
+$("#murSuite").addEventListener("click",()=>{ $("#toutMur").close(); aller(ici+1); bip(500); });
 
 // Toucher une photo du mur l'ouvre en grand. On ferme avec la croix, Échap ou en touchant à côté.
 function agrandir(im){ $("#loupeImg").src=im.src; $("#loupeImg").alt=im.alt; $("#loupe").showModal(); bip(660); }
