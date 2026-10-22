@@ -441,7 +441,22 @@ const bip=(f=520,duree=.12,type="triangle")=>{ if(!sonActif) return;
     o.type=type; o.frequency.value=f; g.gain.setValueAtTime(.18,audio.currentTime); g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duree);
     o.connect(g).connect(audio.destination); o.start(); o.stop(audio.currentTime+duree); }catch(e){} };
 const melodie=notes=>notes.forEach((f,i)=>setTimeout(()=>bip(f,.18),i*130));
-$("#son").addEventListener("click",e=>{ sonActif=!sonActif; const b=e.currentTarget; b.setAttribute("aria-pressed",sonActif); b.setAttribute("aria-label",sonActif?"Couper le son":"Activer le son"); bip(660); });
+/* La musique de fond : une petite boîte à musique qui tourne en boucle tant que le son est actif. */
+const air=[659,0,784,659, 587,0,523,0, 587,0,659,784, 880,0,784,0, 698,0,880,698, 659,0,523,0, 587,0,659,587, 523,0,0,0];
+const basse=[131,131,196,175,175,131,196,131];
+let pas=0, prochaine=0, minuterie;
+const note=(f,t,duree,vol)=>{ const o=audio.createOscillator(),g=audio.createGain(); o.type="sine"; o.frequency.value=f;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(vol,t+.01); g.gain.exponentialRampToValueAtTime(.001,t+duree);
+  o.connect(g).connect(audio.destination); o.start(t); o.stop(t+duree); };
+const programmer=()=>{ if(prochaine<audio.currentTime) prochaine=audio.currentTime+.05;
+  while(prochaine<audio.currentTime+.2){ const i=pas%air.length;
+    if(air[i]) note(air[i],prochaine,.9,.05); if(i%4===0) note(basse[i/4],prochaine,1.6,.04);
+    prochaine+=.28; pas++; } };
+const musique=jouer=>{ clearInterval(minuterie); if(!jouer) return;
+  try{ audio=audio||new (window.AudioContext||window.webkitAudioContext)(); audio.resume(); minuterie=setInterval(programmer,50); }catch(e){} };
+// Elle se tait quand l'onglet est caché, et reprend au retour.
+document.addEventListener("visibilitychange",()=>musique(sonActif && !document.hidden));
+$("#son").addEventListener("click",e=>{ sonActif=!sonActif; const b=e.currentTarget; b.setAttribute("aria-pressed",sonActif); b.setAttribute("aria-label",sonActif?"Couper le son":"Activer le son"); bip(660); musique(sonActif); });
 const fete=(fort=false)=>{ if(reduit||typeof confetti!=="function") return; const b={colors:couleurs,disableForReducedMotion:true,zIndex:5};
   confetti({...b,particleCount:fort?150:50,spread:fort?100:70,origin:{y:.65}});
   if(fort){ setTimeout(()=>confetti({...b,particleCount:80,angle:60,spread:70,origin:{x:0,y:.8}}),250); setTimeout(()=>confetti({...b,particleCount:80,angle:120,spread:70,origin:{x:1,y:.8}}),400); } };
