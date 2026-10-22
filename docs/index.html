@@ -402,7 +402,7 @@ const CADEAU = {
     titre: "Merci pour tout, Lucie",
     texte: "Tu vas nous manquer."       // affiché sous les prénoms de l'équipe, vide pour ne rien afficher
   },
-  signatures: ""                    // prénoms en plus de ceux du mur, par exemple "Paul, Zoé"
+  signatures: "André, Anne Aurore, Chloé, Tanguy, Marc, Andréa, Maud, Mickael, Maxime F, Maxime D, William, Alisson, Diane, Clément P"   // prénoms en plus de ceux du mur, ceux déjà sur le mur ne sont pas répétés
 };
 /* ========================================================= */
 
@@ -670,9 +670,15 @@ $("#loupe").addEventListener("click",e=>{ if(e.target.id==="loupe") $("#loupe").
 $("#loupe").addEventListener("close",()=>$("#loupeImg").removeAttribute("src"));
 
 /* Fin, signée par celles et ceux qui ont écrit */
+// Les prénoms du mur puis ceux des signatures, sans doublon : « Anne Aurore » et « anne-aurore » comptent pour une seule personne.
+function prenoms(duMur){
+  const cle=p=>p.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[\s-]+/g," ").toLowerCase();
+  const vus=new Set(), noms=[];
+  for(const n of [...duMur, ...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(cle(p))){ vus.add(cle(p)); noms.push(p); } }
+  return noms;
+}
 function ecrireNoms(){
-  const vus=new Set(), tous=[];
-  for(const n of [...mots.map(m=>m.qui), ...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(p.toLowerCase())){ vus.add(p.toLowerCase()); tous.push(p); } }
+  const tous=prenoms(mots.map(m=>m.qui));
   const z=$("#noms"); z.textContent="";
   if(tous.length){
     const parts=new Intl.ListFormat("fr",{type:"conjunction"}).formatToParts([...tous,"toute l'équipe"]);
@@ -944,8 +950,7 @@ async function fabriquerCarte(){
   const [lucie,...photos]=await Promise.all([image("assets/lucie.jpg"),
     ...brut.map(m=>typeof m.photo==="string"&&m.photo.startsWith("data:image/jpeg;base64,")?image(m.photo).catch(()=>null):null)]);
   const liste=brut.map((m,k)=>({texte:m.texte,qui:m.prenom||"L'équipe",couleur:m.couleur,photo:photos[k]}));
-  const vus=new Set(), noms=[];
-  for(const n of [...liste.map(m=>m.qui),...CADEAU.signatures.split(",")]){ const p=(n||"").trim(); if(p && !vus.has(p.toLowerCase())){ vus.add(p.toLowerCase()); noms.push(p); } }
+  const noms=prenoms(liste.map(m=>m.qui));
   const c=document.createElement("canvas"); c.width=LP; c.height=HP; const x=c.getContext("2d");
   const pages=[x=>couverture(x,lucie), x=>cadeaux(x,quand), ...pagesMots(x,liste,lucie), x=>dos(x,noms)];
   const pdf=new Pdf({orientation:"portrait",unit:"mm",format:"a4",compress:true});
